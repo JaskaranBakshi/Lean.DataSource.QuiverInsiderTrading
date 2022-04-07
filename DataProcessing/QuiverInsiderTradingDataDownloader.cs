@@ -88,7 +88,7 @@ namespace QuantConnect.DataProcessing
         public bool Run()
         {
             var stopwatch = Stopwatch.StartNew();
-            var today = DateTime.UtcNow.Date;
+            var today = DateTime.Today;
 
             var mapFileProvider = new LocalZipMapFileProvider();
             mapFileProvider.Initialize(new DefaultDataProvider());
