@@ -26,6 +26,7 @@ namespace QuantConnect.DataSource
     /// <summary>
     /// Universe Selection helper class for QuiverQuant InsiderTrading dataset
     /// </summary>
+    [ProtoContract(SkipConstructor = true)]
     public class QuiverQuantInsiderTradingUniverse : BaseData
     {
         /// <summary>

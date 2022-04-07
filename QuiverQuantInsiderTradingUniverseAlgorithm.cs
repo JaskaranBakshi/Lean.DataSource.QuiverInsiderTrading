@@ -21,10 +21,16 @@ using QuantConnect.Data.UniverseSelection;
 using QuantConnect.DataSource;
 
 
-namespace QuantConnect.DataLibrary.Tests
+namespace QuantConnect.Algorithm.CSharp
 {
+    /// <summary>
+    /// Example algorithm using the custom data type as a source of alpha
+    /// </summary>
     public class QuiverQuantInsiderTradingUniverseAlgorithm : QCAlgorithm
     {
+        /// <summary>
+        /// Initialise the data and resolution required, as well as the cash and start-end dates for your algorithm. All algorithms must initialized.
+        /// </summary>
         public override void Initialize()
         {
             // Data ADDED via universe selection is added with Daily resolution.
@@ -49,6 +55,10 @@ namespace QuantConnect.DataLibrary.Tests
             });
         }
         
+        /// <summary>
+        /// Event fired each time that we add/remove securities from the data feed
+        /// </summary>
+        /// <param name="changes">Security additions/removals for this time step</param>
         public override void OnSecuritiesChanged(SecurityChanges changes)
         {
             Log(changes.ToString());
