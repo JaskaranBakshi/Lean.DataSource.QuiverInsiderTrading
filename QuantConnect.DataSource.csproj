@@ -1,10 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>QuantConnect.DataSource</RootNamespace>
-    <AssemblyName>QuantConnect.DataSource.MyCustonDataType</AssemblyName>
-    <OutputPath>bin\$(Configuration)</OutputPath>
-    <DocumentationFile>$(OutputPath)\QuantConnect.DataSource.MyCustonDataType.xml</DocumentationFile>
+    <DocumentationFile>./QuantConnect.DataSource.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,11 +16,11 @@
     <Compile Remove="tests\**" />
     <EmbeddedResource Remove="tests\**" />
     <None Remove="tests\**" />
-    <Compile Remove="DataProcessing\**" />
-    <EmbeddedResource Remove="DataProcessing\**" />
-    <None Remove="DataProcessing\**" />
-    <Compile Remove="Demonstration.cs" />
-    <Compile Remove="DemonstrationUniverse.cs" />
+    <Compile Remove="InsiderTradingAlgorithm.cs" />
     <None Remove=".gitignore" />
+    <None Remove="process.sample.ipynb" />
+    <None Remove="process.sample.py" />
+    <None Remove="process.sample.sh" />
   </ItemGroup>
+
 </Project>

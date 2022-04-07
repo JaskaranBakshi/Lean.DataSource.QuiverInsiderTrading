@@ -27,7 +27,7 @@ using QuantConnect.DataSource;
 namespace QuantConnect.DataLibrary.Tests
 {
     [TestFixture]
-    public class MyCustomDataTypeTests
+    public class InsiderTradingTests
     {
         [Test]
         public void JsonRoundTrip()
@@ -87,12 +87,15 @@ namespace QuantConnect.DataLibrary.Tests
 
         private BaseData CreateNewInstance()
         {
-            return new MyCustomDataType
+            return new InsiderTrading
             {
                 Symbol = Symbol.Empty,
                 Time = DateTime.Today,
                 DataType = MarketDataType.Base,
-                SomeCustomProperty = "This is some market related information"
+                Name = "Institution name",
+                Shares = "Number of Shares",
+                PricePerShare = 0.0m,
+                SharesOwnedFollowing = "Shares Owned After",
             };
         }
     }
