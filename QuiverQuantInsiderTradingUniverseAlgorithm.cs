@@ -19,11 +19,9 @@ using System.Linq;
 using QuantConnect.Data;
 using QuantConnect.Data.UniverseSelection;
 using QuantConnect.DataSource;
-using QuantConnect.Util;
-using QuantConnect.Orders;
-using QuantConnect.Algorithm;
 
-namespace QuantConnect.Algorithm.CSharp
+
+namespace QuantConnect.DataLibrary.Tests
 {
     public class QuiverQuantInsiderTradingUniverseAlgorithm : QCAlgorithm
     {
@@ -51,5 +49,9 @@ namespace QuantConnect.Algorithm.CSharp
             });
         }
         
+        public override void OnSecuritiesChanged(SecurityChanges changes)
+        {
+            Log(changes.ToString());
+        }
     }
 }
