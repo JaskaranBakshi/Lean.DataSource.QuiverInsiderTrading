@@ -55,7 +55,7 @@ namespace QuantConnect.DataProcessing
             '_'
         };
         
-        private readonly JsonSerializerSettings _jsonSerializerSettings = new JsonSerializerSettings
+        private readonly JsonSerializerSettings _jsonSerializerSettings = new ()
         {
             DateTimeZoneHandling = DateTimeZoneHandling.Utc
         };
@@ -73,7 +73,9 @@ namespace QuantConnect.DataProcessing
         public QuiverInsiderTradingDataDownloader(string destinationFolder, string apiKey = null)
         {
             _destinationFolder = Path.Combine(destinationFolder, VendorDataName);
+            _universeFolder = Path.Combine(_destinationFolder, "universe");
             _clientKey = apiKey ?? Config.Get("quiver-auth-token");
+            _canCreateUniverseFiles = Directory.Exists(Path.Combine(Globals.DataFolder, "equity", "usa", "map_files"));
 
             // Represents rate limits of 10 requests per 1.1 second
             _indexGate = new RateGate(10, TimeSpan.FromSeconds(1.1));
@@ -97,15 +99,12 @@ namespace QuantConnect.DataProcessing
             {
                 var companies = GetCompanies().Result.DistinctBy(x => x.Ticker).ToList();
                 var count = companies.Count;
-                var currentPercent = 0.05;
-                var percent = 0.05;
-                var i = 0;
+                var companiesCompleted = 0;
 
-
-                Log.Trace(
-                    $"QuiverInsiderTradingDataDownloader.Run(): Start processing {count.ToStringInvariant()} companies");
+                Log.Trace($"QuiverInsiderTradingDataDownloader.Run(): Start processing {count.ToStringInvariant()} companies");
 
                 var tasks = new List<Task>();
+                var tempData = new ConcurrentDictionary<string, ConcurrentQueue<string>>();
 
                 foreach (var company in companies)
                 {
@@ -115,31 +114,21 @@ namespace QuantConnect.DataProcessing
                     // we don't convert tickers with `-`s into the format we can successfully
                     // index mapfiles with.
                     var quiverTicker = company.Ticker;
-                    string ticker;
 
-
-                    if (!TryNormalizeDefunctTicker(quiverTicker, out ticker))
+                    if (!TryNormalizeDefunctTicker(quiverTicker, out var ticker))
                     {
-                        Log.Error(
-                            $"QuiverInsiderTradingDataDownloader(): Defunct ticker {quiverTicker} is unable to be parsed. Continuing...");
+                        Log.Error( $"QuiverInsiderTradingDataDownloader(): Defunct ticker {quiverTicker} is unable to be parsed. Continuing...");
                         continue;
                     }
 
                     // Begin processing ticker with a normalized value
                     Log.Trace($"QuiverInsiderTradingDataDownloader.Run(): Processing {ticker}");
 
-                    // Makes sure we don't overrun Quiver rate limits accidentally
-                    _indexGate.WaitToProceed();
-
-                    var sid = SecurityIdentifier.GenerateEquity(ticker, Market.USA, true, mapFileProvider, today);
-
                     tasks.Add(
                         HttpRequester($"live/insider/{ticker}")
                             .ContinueWith(
                                 y =>
                                 {
-                                    i++;
-
                                     if (y.IsFaulted)
                                     {
                                         Log.Error(
@@ -171,24 +160,31 @@ namespace QuantConnect.DataProcessing
                                             continue;
                                         }
 
-                                        var curTdate = insiderTrade.Date.Value.Date;
-
-                                        if (curTdate == today)
+                                        if (insiderTrade.Date.Value.Date == today)
                                         {
                                             Log.Trace($"Encountered data from today for {ticker}: {today:yyyy-MM-dd} - Skipping");
                                             continue;
                                         }
 
+                                        var date = insiderTrade.Date.Value.ToStringInvariant("yyyyMMdd");
+
                                         var curRow = string.Join(",",
-                                            $"{sid}",
-                                            $"{ticker}",
-                                            $"{insiderTrade.Date.Value.ToStringInvariant("yyyyMMdd")}",
                                             $"{insiderTrade.Name.Trim()}",
                                             $"{insiderTrade.Shares}",
                                             $"{insiderTrade.PricePerShare}",
                                             $"{insiderTrade.SharesOwnedFollowing}");
 
                                         csvContents.Add(curRow);
+
+                                        csvContents.Add($"{date},{curRow}");
+
+                                        if (!_canCreateUniverseFiles)
+                                            continue;
+
+                                        var sid = SecurityIdentifier.GenerateEquity(ticker, Market.USA, true, mapFileProvider, date);
+
+                                        var queue = tempData.GetOrAdd(date, new ConcurrentQueue<string>());
+                                        queue.Enqueue($"{sid},{ticker},{curRow}");
                                     }
 
                                     if (csvContents.Count != 0)
@@ -196,30 +192,28 @@ namespace QuantConnect.DataProcessing
                                         SaveContentToFile(_destinationFolder, ticker, csvContents);
                                     }
 
-                                    var percentageDone = i / count;
-                                    if (percentageDone >= currentPercent)
+                                    var newCompaniesCompleted = Interlocked.Increment(ref companiesCompleted);
+                                    if (newCompaniesCompleted % 100 == 0)
                                     {
-                                        Log.Trace(
-                                            $"QuiverInsiderTradingDataDownloader.Run(): {percentageDone.ToStringInvariant("P2")} complete");
-                                        currentPercent += percent;
+                                        Log.Trace($"QuiverInsiderTradingDataDownloader.Run(): {newCompaniesCompleted}/{count} complete");
                                     }
                                 }
                             )
                     );
 
-                    if (tasks.Count == 10)
+                }
+
+                if (tasks.Count != 10) continue;
+
+                Task.WaitAll(tasks.ToArray());
+
+                foreach (var kvp in tempData)
                     {
-                        Task.WaitAll(tasks.ToArray());
-                        tasks.Clear();
+                        SaveContentToFile(_universeFolder, kvp.Key, kvp.Value);
                     }
-                }
 
-                if (tasks.Count != 0)
-                {
-                    Task.WaitAll(tasks.ToArray());
+                    tempData.Clear();
                     tasks.Clear();
-
-                }
             }
             catch (Exception e)
             {
@@ -272,6 +266,9 @@ namespace QuantConnect.DataProcessing
 
                         // Responses are in JSON: you need to specify the HTTP header Accept: application/json
                         client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                        // Makes sure we don't overrun Quiver rate limits accidentally
+                        _indexGate.WaitToProceed();
+
                         var response = await client.GetAsync(Uri.EscapeUriString(url));
                         if (response.StatusCode == HttpStatusCode.NotFound)
                         {
@@ -309,46 +306,30 @@ namespace QuantConnect.DataProcessing
         /// Saves contents to disk, deleting existing zip files
         /// </summary>
         /// <param name="destinationFolder">Final destination of the data</param>
-        /// <param name="ticker">Stock ticker</param>
+        /// <param name="name">File name</param>
         /// <param name="contents">Contents to write</param>
-        private void SaveContentToFile(string destinationFolder, string ticker, IEnumerable<string> contents)
+        private void SaveContentToFile(string destinationFolder, string name, IEnumerable<string> contents)
         {
-            ticker = ticker.ToLowerInvariant();
-            var bkPath = Path.Combine(destinationFolder, $"{ticker}-bk.csv");
-            var finalPath = Path.Combine(destinationFolder, $"{ticker}.csv");
-            var finalFileExists = File.Exists(finalPath);
+            var finalPath = Path.Combine(destinationFolder, $"{name.ToLowerInvariant()}.csv");
 
             var lines = new HashSet<string>(contents);
-            if (finalFileExists)
+             if (File.Exists(finalPath))
             {
-                Log.Trace($"QuiverInsiderTradingDataDownloader.SaveContentToZipFile(): Adding to existing file: {finalPath}");
                 foreach (var line in File.ReadAllLines(finalPath))
                 {
                     lines.Add(line);
                 }
             }
-            else
-            {
-                Log.Trace($"QuiverInsiderTradingDataDownloader.SaveContentToZipFile(): Writing to file: {finalPath}");
-            }
 
-            var finalLines = lines
-                .OrderBy(x => DateTime.ParseExact(x.Split(',').First(), "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal))
-                .ToList();
+            var finalLines = destinationFolder.Contains("universe")
+                ? lines.OrderBy(x => x)
+                : lines.OrderBy(x => DateTime.ParseExact(x.Split(',').First(), "yyyyMMdd",
+                    CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal));
 
             var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.tmp");
             File.WriteAllLines(tempPath, finalLines);
             var tempFilePath = new FileInfo(tempPath);
-            if (finalFileExists)
-            {
-                tempFilePath.Replace(finalPath,bkPath);
-                var bkFilePath = new FileInfo(bkPath);
-                bkFilePath.Delete();
-            }
-            else
-            {
-                tempFilePath.MoveTo(finalPath);
-            }
+            tempFilePath.MoveTo(finalPath, true);
         }
 
         /// <summary>
