@@ -108,7 +108,7 @@ namespace QuantConnect.DataSource
                 Date = Parse.DateTimeExact(csv[2], "yyyyMMdd"),
                 Name = csv[3],
                 Shares = csv[4],
-                PricePerShare = price;
+                PricePerShare = price,
                 SharesOwnedFollowing = csv[6],
 
                 Symbol = new Symbol(SecurityIdentifier.Parse(csv[0]), csv[1]),
