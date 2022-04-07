@@ -21,6 +21,8 @@ using System.IO;
 using ProtoBuf;
 using NodaTime;
 using QuantConnect.Data;
+using QuantConnect.Orders;
+using static QuantConnect.StringExtensions;
 
 namespace QuantConnect.DataSource
 {
@@ -33,7 +35,7 @@ namespace QuantConnect.DataSource
         /// <summary>
         /// Date that the Insider Trading spend was reported
         /// </summary>
-        public DateTime Date { get; set; }
+        public DateTime Date => Time;
 
         /// <summary>
         /// Name
@@ -99,18 +101,19 @@ namespace QuantConnect.DataSource
         public override BaseData Reader(SubscriptionDataConfig config, string line, DateTime date, bool isLiveMode)
         {
             var csv = line.Split(',');
+            var price = csv[5].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
 
             return new QuiverQuantInsiderTradingUniverse
             {
                 Date = Parse.DateTimeExact(csv[2], "yyyyMMdd"),
                 Name = csv[3],
                 Shares = csv[4],
-                PricePerShare = csv[5].IfNotNullOrEmpty<decimal?>(s => Parse.Decimal(s)),
+                PricePerShare = price;
                 SharesOwnedFollowing = csv[6],
 
                 Symbol = new Symbol(SecurityIdentifier.Parse(csv[0]), csv[1]),
                 Time = date - Period,
-                Value = followers
+                Value = price ?? 0
             };
         }
 
@@ -119,7 +122,12 @@ namespace QuantConnect.DataSource
         /// </summary>
         public override string ToString()
         {
-            return $"{Symbol} - Name: {Name} - Shares: {Shares}";
+            return Invariant($"{Symbol}({ReportDate}) :: ") +
+                   Invariant($"Date: {Date} ") +
+                   Invariant($"Name: {Name} ") +
+                   Invariant($"Shares: {Shares} ") +
+                   Invariant($"PricePerShare: {PricePerShare} ") +
+                   Invariant($"SharesOwnedFollowing: {SharesOwnedFollowing}");
         }
 
         /// <summary>
