@@ -88,7 +88,7 @@ namespace QuantConnect.DataSource
             set { Time = value - Period; }
         }
 
-        // <summary>
+        /// <summary>
         /// Required for successful Json.NET deserialization
         /// </summary>
         public InsiderTrading()
