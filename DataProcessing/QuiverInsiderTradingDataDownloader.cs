@@ -21,7 +21,6 @@ using QuantConnect.DataSource;
 using QuantConnect.Logging;
 using QuantConnect.Orders;
 using QuantConnect.Util;
-using QuantConnect.Lean.Engine.DataFeeds;
 using QuantConnect.Data.Market;
 using QuantConnect.Data;
 using System;

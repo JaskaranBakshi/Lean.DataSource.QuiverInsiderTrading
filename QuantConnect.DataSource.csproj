@@ -3,7 +3,9 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>QuantConnect.DataSource</RootNamespace>
-    <DocumentationFile>./QuantConnect.DataSource.xml</DocumentationFile>
+    <AssemblyName>QuantConnect.DataSource.testInsider</AssemblyName>
+    <OutputPath>bin\$(Configuration)</OutputPath>
+    <DocumentationFile>$(OutputPath)\QuantConnect.DataSource.InsiderTrading.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,11 +18,12 @@
     <Compile Remove="tests\**" />
     <EmbeddedResource Remove="tests\**" />
     <None Remove="tests\**" />
-    <Compile Remove="InsiderTradingAlgorithm.cs" />
+    <Compile Remove="DataProcessing\**" />
+    <EmbeddedResource Remove="DataProcessing\**" />
+    <None Remove="DataProcessing\**" />
+    <Compile Remove="QuiverQuantInsiderTradingAlgorithm.cs" />
+    <Compile Remove="QuiverQuantInsiderTradingAlgorithmUniverse.cs" />
     <None Remove=".gitignore" />
-    <None Remove="process.sample.ipynb" />
-    <None Remove="process.sample.py" />
-    <None Remove="process.sample.sh" />
   </ItemGroup>
 
 </Project>
