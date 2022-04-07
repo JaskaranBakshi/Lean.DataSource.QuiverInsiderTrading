@@ -77,16 +77,12 @@ namespace QuantConnect.DataSource
         /// The period of time that occurs between the starting time and ending time of the data point
         /// </summary>
         [ProtoMember(14)]
-        public TimeSpan Period { get; set; }
+        public TimeSpan Period { get; set; }  = TimeSpan.FromDays(1);
 
         /// <summary>
         /// The time the data point ends at and becomes available to the algorithm
         /// </summary>
-        public override DateTime EndTime
-        {
-            get { return Time + Period; }
-            set { Time = value - Period; }
-        }
+        public override DateTime EndTime => Time + Period;
 
         /// <summary>
         /// Required for successful Json.NET deserialization
@@ -107,12 +103,12 @@ namespace QuantConnect.DataSource
             parser.SetDelimiters(",");
             string[] csv = parser.ReadFields();
 
-            var parsedDate = Parse.DateTimeExact(csv[2], "yyyyMMdd");//, "'yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\''"      
-            Name = csv[3];
-            Shares = csv[4];
-            PricePerShare = csv[5].IfNotNullOrEmpty<decimal?>(s => Parse.Decimal(s));
-            SharesOwnedFollowing = csv[6];
-            Symbol = new Symbol(SecurityIdentifier.Parse(csv[0]), csv[1]);
+            var parsedDate = Parse.DateTimeExact(csv[0], "yyyyMMdd");//, "'yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\''"      
+            Name = csv[1];
+            Shares = csv[2];
+            PricePerShare = csv[3].IfNotNullOrEmpty<decimal?>(s => Parse.Decimal(s));
+            SharesOwnedFollowing = csv[4];
+
             Time = parsedDate;
             Period = TimeSpan.FromDays(1);
             

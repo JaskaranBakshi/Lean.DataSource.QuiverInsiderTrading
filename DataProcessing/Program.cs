@@ -40,7 +40,7 @@ namespace QuantConnect.DataProcessing
                 "alternative",
                 "quiver");
 
-            QuiverInsiderTradingDataDownloader instance;
+            QuiverInsiderTradingDataDownloader instance = null;
             try
             {
                 // Pass in the values we got from the configuration into the downloader/converter.
@@ -48,8 +48,8 @@ namespace QuantConnect.DataProcessing
             }
             catch (Exception err)
             {
-                Log.Error(err, $"The downloader/converter for {QuiverInsiderTradingDataDownloader.VendorDataName} {QuiverInsiderTradingDataDownloader.VendorDataName} data failed to be constructed");
-                return 1;
+                Log.Error(err, $"QuantConnect.DataProcessing.Program.Main(): The downloader/converter for {QuiverInsiderTradingDataDownloader.VendorDataName} {QuiverInsiderTradingDataDownloader.VendorDataName} data failed to be constructed");
+                Environment.Exit(1);
             }
 
             // No need to edit anything below here for most use cases.
@@ -61,13 +61,13 @@ namespace QuantConnect.DataProcessing
                 if (!success)
                 {
                     Log.Error($"QuantConnect.DataProcessing.Program.Main(): Failed to download/process {QuiverInsiderTradingDataDownloader.VendorName} {QuiverInsiderTradingDataDownloader.VendorDataName} data");
-                    return 1;
+                    Environment.Exit(1);
                 }
             }
             catch (Exception err)
             {
                 Log.Error(err, $"The downloader/converter for {QuiverInsiderTradingDataDownloader.VendorDataName} {QuiverInsiderTradingDataDownloader.VendorDataName} data exited unexpectedly");
-                return 1;
+                Environment.Exit(1);
             }
             finally
             {
@@ -76,7 +76,7 @@ namespace QuantConnect.DataProcessing
             }
             
             // The downloader/converter was successful
-            return 0;
+            Environment.Exit(0);
         }
     }
 }
