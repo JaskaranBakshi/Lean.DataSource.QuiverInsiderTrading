@@ -55,7 +55,7 @@ namespace QuantConnect.DataSource
         /// <summary>
         /// SharesOwnedFollowing
         /// </summary>
-        public string SharesOwnedFollowing { get; set; }
+        public decimal? SharesOwnedFollowing { get; set; }
 
 
         /// <summary>
@@ -102,17 +102,16 @@ namespace QuantConnect.DataSource
         {
             var csv = line.Split(',');
             var price = csv[5].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
-
+            var sharesAfter = csv[6].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
             return new QuiverQuantInsiderTradingUniverse
             {
-                Date = Parse.DateTimeExact(csv[2], "yyyyMMdd"),
+                Time = Parse.DateTimeExact(csv[2], "yyyyMMdd") - Period,
                 Name = csv[3],
                 Shares = csv[4],
                 PricePerShare = price,
-                SharesOwnedFollowing = csv[6],
+                SharesOwnedFollowing = sharesAfter,
 
                 Symbol = new Symbol(SecurityIdentifier.Parse(csv[0]), csv[1]),
-                Time = date - Period,
                 Value = price ?? 0
             };
         }
@@ -122,8 +121,7 @@ namespace QuantConnect.DataSource
         /// </summary>
         public override string ToString()
         {
-            return Invariant($"{Symbol}({ReportDate}) :: ") +
-                   Invariant($"Date: {Date} ") +
+            return Invariant($"{Symbol}({Date}) :: ") +
                    Invariant($"Name: {Name} ") +
                    Invariant($"Shares: {Shares} ") +
                    Invariant($"PricePerShare: {PricePerShare} ") +

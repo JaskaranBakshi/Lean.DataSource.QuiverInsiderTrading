@@ -22,7 +22,7 @@
     <EmbeddedResource Remove="DataProcessing\**" />
     <None Remove="DataProcessing\**" />
     <Compile Remove="QuiverQuantInsiderTradingAlgorithm.cs" />
-    <Compile Remove="QuiverQuantInsiderTradingAlgorithmUniverse.cs" />
+    <Compile Remove="QuiverQuantInsiderTradingUniverseAlgorithm.cs" />
     <None Remove=".gitignore" />
   </ItemGroup>
 

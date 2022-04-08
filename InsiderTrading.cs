@@ -71,7 +71,7 @@ namespace QuantConnect.DataSource
         /// </summary>
         [ProtoMember(15)]
         [JsonProperty(PropertyName = "SharesOwnedFollowing")]
-        public string SharesOwnedFollowing { get; set; }
+        public decimal? SharesOwnedFollowing { get; set; }
 
         /// <summary>
         /// The period of time that occurs between the starting time and ending time of the data point
@@ -107,7 +107,7 @@ namespace QuantConnect.DataSource
             Name = csv[1];
             Shares = csv[2];
             PricePerShare = csv[3].IfNotNullOrEmpty<decimal?>(s => Parse.Decimal(s));
-            SharesOwnedFollowing = csv[4];
+            SharesOwnedFollowing = csv[4].IfNotNullOrEmpty<decimal?>(s => Parse.Decimal(s));
 
             Time = parsedDate;
             Period = TimeSpan.FromDays(1);
