@@ -95,7 +95,7 @@ namespace QuantConnect.DataLibrary.Tests
                 Name = "Institution name",
                 Shares = "Number of Shares",
                 PricePerShare = 0.0m,
-                SharesOwnedFollowing = 0.0m,
+                SharesOwnedFollowing = "Shares Owned After",
             };
         }
     }
