@@ -76,13 +76,12 @@ namespace QuantConnect.DataSource
         /// <summary>
         /// The period of time that occurs between the starting time and ending time of the data point
         /// </summary>
-        [ProtoMember(14)]
-        public TimeSpan Period { get; set; }  = TimeSpan.FromDays(1);
+        private TimeSpan _period = TimeSpan.FromDays(1);
 
         /// <summary>
         /// The time the data point ends at and becomes available to the algorithm
         /// </summary>
-        public override DateTime EndTime => Time + Period;
+        public override DateTime EndTime => Time + _period;
 
         /// <summary>
         /// Required for successful Json.NET deserialization
@@ -110,7 +109,7 @@ namespace QuantConnect.DataSource
             SharesOwnedFollowing = csv[4].IfNotNullOrEmpty<decimal?>(s => Parse.Decimal(s));
 
             Time = parsedDate;
-            Period = TimeSpan.FromDays(1);
+            _period = TimeSpan.FromDays(1);
             
         }
 
