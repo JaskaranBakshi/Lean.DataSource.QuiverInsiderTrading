@@ -174,8 +174,6 @@ namespace QuantConnect.DataProcessing
                                             $"{insiderTrade.PricePerShare}",
                                             $"{insiderTrade.SharesOwnedFollowing}");
 
-                                        csvContents.Add(curRow);
-
                                         csvContents.Add($"{date},{curRow}");
 
                                         if (!_canCreateUniverseFiles)
