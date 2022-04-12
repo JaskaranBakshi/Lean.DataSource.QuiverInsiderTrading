@@ -27,7 +27,7 @@ using QuantConnect.DataSource;
 namespace QuantConnect.DataLibrary.Tests
 {
     [TestFixture]
-    public class InsiderTradingTests
+    public class QuiverInsiderTradingTests
     {
         [Test]
         public void JsonRoundTrip()

@@ -34,7 +34,7 @@ namespace QuantConnect.DataSource
     /// Example custom data type
     /// </summary>
     [ProtoContract(SkipConstructor = true)]
-    public class InsiderTrading : BaseData
+    public class QuiverInsiderTrading : BaseData
     {
 
         /// <summary>
@@ -84,17 +84,10 @@ namespace QuantConnect.DataSource
         public override DateTime EndTime => Time + _period;
 
         /// <summary>
-        /// Required for successful Json.NET deserialization
-        /// </summary>
-        public InsiderTrading()
-        {
-        }
-
-        /// <summary>
         /// Creates a new instance of QuiverCongress from a CSV line
         /// </summary>
         /// <param name="csvLine">CSV line</param>
-        public InsiderTrading(string csvLine)
+        public QuiverInsiderTrading(string csvLine)
         {
             //var csv = line.Split(',');
             TextFieldParser parser = new TextFieldParser(new StringReader(csvLine));
@@ -144,7 +137,7 @@ namespace QuantConnect.DataSource
         /// <returns>New instance</returns>
         public override BaseData Reader(SubscriptionDataConfig config, string line, DateTime date, bool isLiveMode)
         {
-            return new InsiderTrading(line)
+            return new QuiverInsiderTrading(line)
             {
                 Symbol = config.Symbol,
             };

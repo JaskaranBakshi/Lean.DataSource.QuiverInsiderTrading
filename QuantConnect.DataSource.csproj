@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>QuantConnect.DataSource</RootNamespace>
-    <AssemblyName>QuantConnect.DataSource.InsiderTrading</AssemblyName>
+    <AssemblyName>QuantConnect.DataSource.QuiverInsiderTrading</AssemblyName>
     <OutputPath>bin\$(Configuration)</OutputPath>
-    <DocumentationFile>$(OutputPath)\QuantConnect.DataSource.InsiderTrading.xml</DocumentationFile>
+    <DocumentationFile>$(OutputPath)\QuantConnect.DataSource.QuiverInsiderTrading.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
