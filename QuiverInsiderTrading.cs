@@ -84,6 +84,13 @@ namespace QuantConnect.DataSource
         public override DateTime EndTime => Time + _period;
 
         /// <summary>
+        /// Required for successful Json.NET deserialization
+        /// </summary>
+        public QuiverInsiderTrading()
+        {
+        }
+
+        /// <summary>
         /// Creates a new instance of QuiverCongress from a CSV line
         /// </summary>
         /// <param name="csvLine">CSV line</param>
