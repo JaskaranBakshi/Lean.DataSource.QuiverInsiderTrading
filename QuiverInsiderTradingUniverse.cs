@@ -30,7 +30,7 @@ namespace QuantConnect.DataSource
     /// Universe Selection helper class for QuiverQuant InsiderTrading dataset
     /// </summary>
     [ProtoContract(SkipConstructor = true)]
-    public class QuiverQuantInsiderTradingUniverse : BaseData
+    public class QuiverInsiderTradingUniverse : BaseData
     {
         /// <summary>
         /// Date that the Insider Trading spend was reported
@@ -103,7 +103,7 @@ namespace QuantConnect.DataSource
             var csv = line.Split(',');
             var price = csv[5].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
             var sharesAfter = csv[6].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
-            return new QuiverQuantInsiderTradingUniverse
+            return new QuiverInsiderTradingUniverse
             {
                 Time = Parse.DateTimeExact(csv[2], "yyyyMMdd") - Period,
                 Name = csv[3],

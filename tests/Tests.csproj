@@ -4,8 +4,8 @@
     <RootNamespace>QuantConnect.DataLibrary.Tests</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\QuiverQuantInsiderTradingAlgorithm.cs" Link="QuiverQuantInsiderTradingAlgorithm.cs" />
-    <Compile Include="..\QuiverQuantInsiderTradingUniverseAlgorithm.cs" Link="QuiverQuantInsiderTradingUniverseAlgorithm.cs" />
+    <Compile Include="..\QuiverInsiderTradingAlgorithm.cs" Link="QuiverInsiderTradingAlgorithm.cs" />
+    <Compile Include="..\QuiverInsiderTradingUniverseAlgorithm.cs" Link="QuiverInsiderTradingUniverseAlgorithm.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="protobuf-net" Version="3.0.29" />

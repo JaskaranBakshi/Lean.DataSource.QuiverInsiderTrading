@@ -25,7 +25,7 @@ namespace QuantConnect.DataLibrary.Tests
     /// <summary>
     /// Example algorithm using the custom data type as a source of alpha
     /// </summary>
-    public class QuiverQuantInsiderTradingAlgorithm : QCAlgorithm
+    public class QuiverInsiderTradingAlgorithm : QCAlgorithm
     {
         private Symbol _customDataSymbol;
         private Symbol _equitySymbol;

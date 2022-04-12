@@ -26,7 +26,7 @@ namespace QuantConnect.Algorithm.CSharp
     /// <summary>
     /// Example algorithm using the custom data type as a source of alpha
     /// </summary>
-    public class QuiverQuantInsiderTradingUniverseAlgorithm : QCAlgorithm
+    public class QuiverInsiderTradingUniverseAlgorithm : QCAlgorithm
     {
         /// <summary>
         /// Initialise the data and resolution required, as well as the cash and start-end dates for your algorithm. All algorithms must initialized.
@@ -41,7 +41,7 @@ namespace QuantConnect.Algorithm.CSharp
             SetCash(100000);
 
             // add a custom universe data source (defaults to usa-equity)
-            AddUniverse<QuiverQuantInsiderTradingUniverse>("QuiverQuantInsiderTradingUniverse", Resolution.Daily, data =>
+            AddUniverse<QuiverInsiderTradingUniverse>("QuiverInsiderTradingUniverse", Resolution.Daily, data =>
             {
                 foreach (var datum in data)
                 {
