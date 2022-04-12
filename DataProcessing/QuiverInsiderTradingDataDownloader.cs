@@ -66,7 +66,7 @@ namespace QuantConnect.DataProcessing
         private readonly RateGate _indexGate;
 
         /// <summary>
-        /// Creates a new instance of <see cref="InsiderTrading"/>
+        /// Creates a new instance of <see cref="QuiverInsiderTrading"/>
         /// </summary>
         /// <param name="destinationFolder">The folder where the data will be saved</param>
         /// <param name="apiKey">The QuiverQuant API key</param>
@@ -144,7 +144,7 @@ namespace QuantConnect.DataProcessing
                                     }
 
                                     var insiderTrades =
-                                        JsonConvert.DeserializeObject<List<InsiderTrading>>(result,
+                                        JsonConvert.DeserializeObject<List<QuiverInsiderTrading>>(result,
                                             _jsonSerializerSettings);
                                     var csvContents = new List<string>();
 

@@ -87,7 +87,7 @@ namespace QuantConnect.DataLibrary.Tests
 
         private BaseData CreateNewInstance()
         {
-            return new InsiderTrading
+            return new QuiverInsiderTrading
             {
                 Symbol = Symbol.Empty,
                 Time = DateTime.Today,
