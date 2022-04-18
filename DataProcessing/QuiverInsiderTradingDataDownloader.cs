@@ -16,13 +16,14 @@
 using Newtonsoft.Json;
 using QuantConnect;
 using QuantConnect.Configuration;
+using QuantConnect.Data;
 using QuantConnect.Data.Auxiliary;
+using QuantConnect.Data.Market;
 using QuantConnect.DataSource;
+using QuantConnect.Lean.Engine.DataFeeds;
 using QuantConnect.Logging;
 using QuantConnect.Orders;
 using QuantConnect.Util;
-using QuantConnect.Data.Market;
-using QuantConnect.Data;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -47,6 +48,8 @@ namespace QuantConnect.DataProcessing
         public const string VendorDataName = "insidertrading";
         
         private readonly string _destinationFolder;
+        private readonly string _universeFolder;
+        private readonly bool _canCreateUniverseFiles;
         private readonly string _clientKey;
         private readonly int _maxRetries = 5;
         private static readonly List<char> _defunctDelimiters = new List<char>
@@ -80,7 +83,7 @@ namespace QuantConnect.DataProcessing
             // Represents rate limits of 10 requests per 1.1 second
             _indexGate = new RateGate(10, TimeSpan.FromSeconds(1.1));
 
-            Directory.CreateDirectory(_destinationFolder);
+            Directory.CreateDirectory(_universeFolder);
         }
 
         /// <summary>
@@ -166,20 +169,16 @@ namespace QuantConnect.DataProcessing
                                             continue;
                                         }
 
-                                        var date = insiderTrade.Date.Value.ToStringInvariant("yyyyMMdd");
-
-                                        var curRow = string.Join(",",
-                                            $"{insiderTrade.Name.Trim()}",
-                                            $"{insiderTrade.Shares}",
-                                            $"{insiderTrade.PricePerShare}",
-                                            $"{insiderTrade.SharesOwnedFollowing}");
+                                        var dateTime = insiderTrade.Date.Value;
+                                        var date = $"{dateTime:yyyyMMdd}";
+                                        var curRow = $"{insiderTrade.Name.Trim()},{insiderTrade.Shares},{insiderTrade.PricePerShare},{insiderTrade.SharesOwnedFollowing}";
 
                                         csvContents.Add($"{date},{curRow}");
 
                                         if (!_canCreateUniverseFiles)
                                             continue;
 
-                                        var sid = SecurityIdentifier.GenerateEquity(ticker, Market.USA, true, mapFileProvider, date);
+                                        var sid = SecurityIdentifier.GenerateEquity(ticker, Market.USA, true, mapFileProvider, dateTime);
 
                                         var queue = tempData.GetOrAdd(date, new ConcurrentQueue<string>());
                                         queue.Enqueue($"{sid},{ticker},{curRow}");
@@ -201,17 +200,20 @@ namespace QuantConnect.DataProcessing
 
                 }
 
-                if (tasks.Count != 10) continue;
+                if (tasks.Count != 10)
+                {
+                    Task.WaitAll(tasks.ToArray());
 
-                Task.WaitAll(tasks.ToArray());
-
-                foreach (var kvp in tempData)
+                    foreach (var kvp in tempData)
                     {
-                        SaveContentToFile(_universeFolder, kvp.Key, kvp.Value);
-                    }
+                        {
+                            SaveContentToFile(_universeFolder, kvp.Key, kvp.Value);
+                        }
 
-                    tempData.Clear();
-                    tasks.Clear();
+                        tempData.Clear();
+                        tasks.Clear();
+                    }
+                }
             }
             catch (Exception e)
             {
