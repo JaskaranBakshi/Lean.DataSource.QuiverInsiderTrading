@@ -128,7 +128,7 @@ namespace QuantConnect.DataProcessing
                     Log.Trace($"QuiverInsiderTradingDataDownloader.Run(): Processing {ticker}");
 
                     tasks.Add(
-                        HttpRequester($"live/insider?ticker={ticker}")
+                        HttpRequester($"live/insiders?ticker={ticker}")
                             .ContinueWith(
                                 y =>
                                 {
