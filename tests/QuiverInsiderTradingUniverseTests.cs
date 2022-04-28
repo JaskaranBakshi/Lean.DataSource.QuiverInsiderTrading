@@ -49,7 +49,7 @@ namespace QuantConnect.DataLibrary.Tests
             var datum = CreateNewSelection();
 
             var expected = from d in datum
-                            where d.Direction == "Buy"
+                            where d.Shares > 2000
                             select d.Symbol;
             var result = new List<Symbol> {Symbol.Create("HWM", SecurityType.Equity, Market.USA)};
 
