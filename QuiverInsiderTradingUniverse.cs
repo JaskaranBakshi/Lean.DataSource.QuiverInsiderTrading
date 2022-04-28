@@ -45,7 +45,7 @@ namespace QuantConnect.DataSource
         /// <summary>
         /// Shares
         /// </summary>
-        public string Shares { get; set; }
+        public decimal? Shares { get; set; }
 
         /// <summary>
         /// PricePerShare
@@ -101,13 +101,14 @@ namespace QuantConnect.DataSource
         public override BaseData Reader(SubscriptionDataConfig config, string line, DateTime date, bool isLiveMode)
         {
             var csv = line.Split(',');
+            var shares = csv[4].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
             var price = csv[5].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
             var sharesAfter = csv[6].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
             return new QuiverInsiderTradingUniverse
             {
                 Time = Parse.DateTimeExact(csv[2], "yyyyMMdd") - Period,
                 Name = csv[3],
-                Shares = csv[4],
+                Shares = shares,
                 PricePerShare = price,
                 SharesOwnedFollowing = sharesAfter,
 
