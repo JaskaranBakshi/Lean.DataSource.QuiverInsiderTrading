@@ -83,7 +83,7 @@ namespace QuantConnect.DataProcessing
             _canCreateUniverseFiles = Directory.Exists(Path.Combine(Globals.DataFolder, "equity", "usa", "map_files"));
 
             // Represents rate limits of 10 requests per 1.1 second
-            _indexGate = new RateGate(10, TimeSpan.FromSeconds(1.1));
+            _indexGate = new RateGate(1, TimeSpan.FromSeconds(2));
 
             Directory.CreateDirectory(_universeFolder);
         }
