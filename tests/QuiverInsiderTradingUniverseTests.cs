@@ -77,9 +77,9 @@ namespace QuantConnect.DataLibrary.Tests
             return new QuiverInsiderTradingUniverse
                 {
                     Name = "",
-                    Shares = 0.0m,
-                    PricePerShare = 0.0m,
-                    SharesOwnedFollowing = 0.0m,
+                    Shares = "",
+                    PricePerShare = "",
+                    SharesOwnedFollowing = "",
 
                     Symbol = new Symbol(SecurityIdentifier.Parse("A RPTMYV3VC57P"), "A"),
                     Time = DateTime.Today
