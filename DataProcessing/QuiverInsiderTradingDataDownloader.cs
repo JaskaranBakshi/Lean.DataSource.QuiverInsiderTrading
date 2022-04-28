@@ -167,7 +167,7 @@ namespace QuantConnect.DataProcessing
 
                                         var dateTime = insiderTrade.Date.Value;
                                         var date = $"{dateTime:yyyyMMdd}";
-                                        var curRow = $"{insiderTrade.Name.Trim()},{insiderTrade.Shares},{insiderTrade.PricePerShare},{insiderTrade.SharesOwnedFollowing}";
+                                        var curRow = $"{insiderTrade.Name.Replace(",", string.Empty).Trim()},{insiderTrade.Shares},{insiderTrade.PricePerShare},{insiderTrade.SharesOwnedFollowing}";
 
                                         csvContents.Add($"{date},{curRow}");
 
@@ -215,14 +215,17 @@ namespace QuantConnect.DataProcessing
                                     {
                                         var tradeData = trade.Split(",");
                                         var share = tradeData[1].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
-                                        var pricePerShare = tradeData[1].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
-                                        var sharesOwnedFollowing = tradeData[1].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+                                        var pricePerShare = tradeData[2].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+                                        var sharesOwnedFollowing = tradeData[3].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
 
                                         var oldShare = dailyTrades[1].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
                                         var oldPricePerShare = dailyTrades[2].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
                                         var oldSharesOwnedFollowing = dailyTrades[3].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
 
-                                        dailyTrades[0] = $"{dailyTrades[1]};{tradeData[0]}";
+                                        var names = new HashSet<string>(dailyTrades[0].Split(";"));
+                                        names.Add(tradeData[0]);
+                                        dailyTrades[0] = $"{string.Join(';', names)}";
+
                                         var newShare = oldShare + share;
                                         dailyTrades[1] = $"{newShare}";
                                         dailyTrades[2] = $"{(pricePerShare * share + oldPricePerShare * oldShare) / newShare}";

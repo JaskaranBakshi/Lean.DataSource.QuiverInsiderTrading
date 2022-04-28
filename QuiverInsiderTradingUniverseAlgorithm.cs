@@ -42,7 +42,7 @@ namespace QuantConnect.Algorithm.CSharp
             {
                 foreach (var datum in data)
                 {
-                    Log($"{datum.Symbol},{datum.Name},{datum.Shares},{datum.PricePerShare},{datum.SharesOwnedFollowing}");
+                    Log($"{datum.Symbol},{string.Join(';', datum.Name)},{datum.Shares},{datum.PricePerShare},{datum.SharesOwnedFollowing}");
                 }
 
                 // define our selection criteria

@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using ProtoBuf;
 using NodaTime;
 using QuantConnect.Data;
@@ -39,7 +40,7 @@ namespace QuantConnect.DataSource
         /// <summary>
         /// Name
         /// </summary>
-        public string Name { get; set; }
+        public List<string> Name { get; set; }
 
         /// <summary>
         /// Shares
@@ -107,7 +108,7 @@ namespace QuantConnect.DataSource
             return new QuiverInsiderTradingUniverse
             {
                 Time = Parse.DateTimeExact(csv[2], "yyyyMMdd") - Period,
-                Name = csv[3],
+                Name = csv[3].Split(";").ToList(),
                 Shares = share,
                 PricePerShare = price,
                 SharesOwnedFollowing = sharesAfter,
@@ -123,7 +124,7 @@ namespace QuantConnect.DataSource
         public override string ToString()
         {
             return Invariant($"{Symbol}({Date}) :: ") +
-                   Invariant($"Name: {Name} ") +
+                   Invariant($"Name: {string.Join(';', Name)} ") +
                    Invariant($"Shares: {Shares} ") +
                    Invariant($"PricePerShare: {PricePerShare} ") +
                    Invariant($"SharesOwnedFollowing: {SharesOwnedFollowing}");
