@@ -57,7 +57,7 @@ namespace QuantConnect.DataSource
         /// </summary>
         [ProtoMember(13)]
         [JsonProperty(PropertyName = "Shares")]
-        public string Shares { get; set; }
+        public decimal? Shares { get; set; }
 
         /// <summary>
         /// PricePerShare
@@ -104,7 +104,7 @@ namespace QuantConnect.DataSource
 
             var parsedDate = Parse.DateTimeExact(csv[0], "yyyyMMdd");//, "'yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\''"      
             Name = csv[1];
-            Shares = csv[2];
+            Shares = csv[2].IfNotNullOrEmpty<decimal?>(s => Parse.Decimal(s));
             PricePerShare = csv[3].IfNotNullOrEmpty<decimal?>(s => Parse.Decimal(s));
             SharesOwnedFollowing = csv[4].IfNotNullOrEmpty<decimal?>(s => Parse.Decimal(s));
 

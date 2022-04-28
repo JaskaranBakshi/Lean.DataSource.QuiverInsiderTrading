@@ -51,12 +51,12 @@ namespace QuantConnect.DataLibrary.Tests
             if (!data.IsNullOrEmpty())
             {
                 // based on the custom data property we will buy or short the underlying equity
-                var t = float.Parse(data[_customDataSymbol].Shares, System.Globalization.CultureInfo.InvariantCulture);
-                if (t > 0.0)
+                var t = data[_customDataSymbol].Shares;
+                if (t > 0.0m)
                 {
                     SetHoldings(_equitySymbol, 1);
                 }
-                else if (t < 0)
+                else if (t < 0.0m)
                 {
                     SetHoldings(_equitySymbol, -1);
                 }
