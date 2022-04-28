@@ -55,7 +55,9 @@ namespace QuantConnect.DataProcessing
         private static readonly List<char> _defunctDelimiters = new List<char>
         {
             '-',
-            '_'
+            '$',
+            '(',
+            ')'
         };
         
         private readonly JsonSerializerSettings _jsonSerializerSettings = new ()

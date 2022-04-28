@@ -23,6 +23,8 @@
     <None Remove="DataProcessing\**" />
     <Compile Remove="QuiverInsiderTradingAlgorithm.cs" />
     <Compile Remove="QuiverInsiderTradingUniverseAlgorithm.cs" />
+    <None Remove="QuiverInsiderTradingAlgorithm.cs" />
+    <None Remove="QuiverInsiderTradingUniverseAlgorithm.cs" />
     <None Remove=".gitignore" />
   </ItemGroup>
 

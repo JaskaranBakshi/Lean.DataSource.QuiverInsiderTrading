@@ -6,6 +6,8 @@
   <ItemGroup>
     <Compile Include="..\QuiverInsiderTradingAlgorithm.cs" Link="QuiverInsiderTradingAlgorithm.cs" />
     <Compile Include="..\QuiverInsiderTradingUniverseAlgorithm.cs" Link="QuiverInsiderTradingUniverseAlgorithm.cs" />
+    <Content Include="..\QuiverInsiderTradingAlgorithm.py" Link="QuiverInsiderTradingAlgorithm.py" />
+    <Content Include="..\QuiverInsiderTradingUniverseAlgorithm.py" Link="QuiverInsiderTradingUniverseAlgorithm.py" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="protobuf-net" Version="3.0.29" />
@@ -19,5 +21,11 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\QuantConnect.DataSource.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="config.json" />
+    <Content Include="config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 </Project>
