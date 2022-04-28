@@ -21,7 +21,6 @@ using System.IO;
 using ProtoBuf;
 using NodaTime;
 using QuantConnect.Data;
-using QuantConnect.Orders;
 using static QuantConnect.StringExtensions;
 
 namespace QuantConnect.DataSource
@@ -45,7 +44,7 @@ namespace QuantConnect.DataSource
         /// <summary>
         /// Shares
         /// </summary>
-        public string Shares { get; set; }
+        public decimal? Shares { get; set; }
 
         /// <summary>
         /// PricePerShare
@@ -101,13 +100,15 @@ namespace QuantConnect.DataSource
         public override BaseData Reader(SubscriptionDataConfig config, string line, DateTime date, bool isLiveMode)
         {
             var csv = line.Split(',');
+            var share = csv[4].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
             var price = csv[5].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
             var sharesAfter = csv[6].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+            
             return new QuiverInsiderTradingUniverse
             {
                 Time = Parse.DateTimeExact(csv[2], "yyyyMMdd") - Period,
                 Name = csv[3],
-                Shares = csv[4],
+                Shares = share,
                 PricePerShare = price,
                 SharesOwnedFollowing = sharesAfter,
 

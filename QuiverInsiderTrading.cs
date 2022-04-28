@@ -14,19 +14,16 @@
  *
 */
 
-using System;
+using Microsoft.VisualBasic.FileIO;
+using Newtonsoft.Json;
 using NodaTime;
 using ProtoBuf;
-using System.IO;
 using QuantConnect.Data;
-using System.Collections.Generic;
-using Microsoft.VisualBasic.FileIO;
-using System.Globalization;
 using QuantConnect.Util;
-using Newtonsoft.Json;
-using static QuantConnect.StringExtensions;
-
-
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 
 namespace QuantConnect.DataSource
 {
@@ -57,7 +54,7 @@ namespace QuantConnect.DataSource
         /// </summary>
         [ProtoMember(13)]
         [JsonProperty(PropertyName = "Shares")]
-        public string Shares { get; set; }
+        public decimal? Shares { get; set; }
 
         /// <summary>
         /// PricePerShare
@@ -104,9 +101,9 @@ namespace QuantConnect.DataSource
 
             var parsedDate = Parse.DateTimeExact(csv[0], "yyyyMMdd");//, "'yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\''"      
             Name = csv[1];
-            Shares = csv[2];
-            PricePerShare = csv[3].IfNotNullOrEmpty<decimal?>(s => Parse.Decimal(s));
-            SharesOwnedFollowing = csv[4].IfNotNullOrEmpty<decimal?>(s => Parse.Decimal(s));
+            Shares = csv[2].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+            PricePerShare = csv[3].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+            SharesOwnedFollowing = csv[4].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
 
             Time = parsedDate;
             _period = TimeSpan.FromDays(1);

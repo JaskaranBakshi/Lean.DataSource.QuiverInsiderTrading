@@ -14,15 +14,11 @@
 */
 
 using Newtonsoft.Json;
-using QuantConnect;
 using QuantConnect.Configuration;
-using QuantConnect.Data;
 using QuantConnect.Data.Auxiliary;
-using QuantConnect.Data.Market;
 using QuantConnect.DataSource;
 using QuantConnect.Lean.Engine.DataFeeds;
 using QuantConnect.Logging;
-using QuantConnect.Orders;
 using QuantConnect.Util;
 using System;
 using System.Collections.Generic;
@@ -107,7 +103,7 @@ namespace QuantConnect.DataProcessing
                 Log.Trace($"QuiverInsiderTradingDataDownloader.Run(): Start processing {count.ToStringInvariant()} companies");
 
                 var tasks = new List<Task>();
-                var tempData = new ConcurrentDictionary<string, ConcurrentQueue<string>>();
+                var tempData = new ConcurrentDictionary<string, ConcurrentDictionary<string, ConcurrentQueue<string>>>();
 
                 foreach (var company in companies)
                 {
@@ -180,8 +176,9 @@ namespace QuantConnect.DataProcessing
 
                                         var sid = SecurityIdentifier.GenerateEquity(ticker, Market.USA, true, mapFileProvider, dateTime);
 
-                                        var queue = tempData.GetOrAdd(date, new ConcurrentQueue<string>());
-                                        queue.Enqueue($"{sid},{ticker},{curRow}");
+                                        var dict = tempData.GetOrAdd(date, new ConcurrentDictionary<string, ConcurrentQueue<string>>());
+                                        var queue = tempData[date].GetOrAdd($"{sid},{ticker}", new ConcurrentQueue<string>());
+                                        queue.Enqueue(curRow);
                                     }
 
                                     if (csvContents.Count != 0)
@@ -198,16 +195,43 @@ namespace QuantConnect.DataProcessing
                             )
                     );
 
-                }
-
-                if (tasks.Count != 10)
-                {
-                    Task.WaitAll(tasks.ToArray());
-
-                    foreach (var kvp in tempData)
+                    if (tasks.Count != 10)
                     {
+                        Task.WaitAll(tasks.ToArray());
+
+                        foreach (var kvp in tempData)
                         {
-                            SaveContentToFile(_universeFolder, kvp.Key, kvp.Value);
+                            SaveContentToFile(_universeFolder, kvp.Key, kvp.Value.Select(kv => 
+                            {
+                                var dailyTrades = new List<string>();
+
+                                foreach(var trade in kv.Value)
+                                {
+                                    if (dailyTrades.Count == 0)
+                                    {
+                                        dailyTrades.AddRange(trade.Split(","));
+                                    }
+                                    else
+                                    {
+                                        var tradeData = trade.Split(",");
+                                        var share = tradeData[1].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+                                        var pricePerShare = tradeData[1].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+                                        var sharesOwnedFollowing = tradeData[1].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+
+                                        var oldShare = dailyTrades[1].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+                                        var oldPricePerShare = dailyTrades[2].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+                                        var oldSharesOwnedFollowing = dailyTrades[3].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+
+                                        dailyTrades[0] = $"{dailyTrades[1]};{tradeData[0]}";
+                                        var newShare = oldShare + share;
+                                        dailyTrades[1] = $"{newShare}";
+                                        dailyTrades[2] = $"{(pricePerShare * share + oldPricePerShare * oldShare) / newShare}";
+                                        dailyTrades[3] = $"{sharesOwnedFollowing + oldSharesOwnedFollowing}";
+                                    }
+                                }
+
+                                return $"{kv.Key},{string.Join(',', dailyTrades)}";
+                            }));
                         }
 
                         tempData.Clear();

@@ -14,12 +14,9 @@
  *
 */
 
-using System;
 using System.Linq;
-using QuantConnect.Data;
 using QuantConnect.Data.UniverseSelection;
 using QuantConnect.DataSource;
-
 
 namespace QuantConnect.Algorithm.CSharp
 {
@@ -45,7 +42,7 @@ namespace QuantConnect.Algorithm.CSharp
             {
                 foreach (var datum in data)
                 {
-                    Log($"{datum.Symbol},{datum.Name},{datum.Shares},{datum.PricePerShare}");
+                    Log($"{datum.Symbol},{datum.Name},{datum.Shares},{datum.PricePerShare},{datum.SharesOwnedFollowing}");
                 }
 
                 // define our selection criteria

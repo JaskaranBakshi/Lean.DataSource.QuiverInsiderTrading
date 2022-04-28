@@ -93,7 +93,7 @@ namespace QuantConnect.DataLibrary.Tests
                 Time = DateTime.Today,
                 DataType = MarketDataType.Base,
                 Name = "Institution name",
-                Shares = "Number of Shares",
+                Shares = 0.0m,
                 PricePerShare = 0.0m,
                 SharesOwnedFollowing = 0.0m,
             };
