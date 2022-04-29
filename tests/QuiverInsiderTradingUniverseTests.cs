@@ -15,17 +15,12 @@
 */
 
 using System;
-using ProtoBuf;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using ProtoBuf.Meta;
 using Newtonsoft.Json;
-using NodaTime;
 using NUnit.Framework;
 using QuantConnect.Data;
 using QuantConnect.DataSource;
-using QuantConnect.Data.Market;
 
 namespace QuantConnect.DataLibrary.Tests
 {
@@ -76,7 +71,7 @@ namespace QuantConnect.DataLibrary.Tests
         {
             return new QuiverInsiderTradingUniverse
                 {
-                    Name = "",
+                    Name = new List<string>{"John"},
                     Shares = 0.0m,
                     PricePerShare = 0.0m,
                     SharesOwnedFollowing = 0.0m,
@@ -92,7 +87,7 @@ namespace QuantConnect.DataLibrary.Tests
             {
                 new QuiverInsiderTradingUniverse
                 {
-                    Name = "",
+                    Name = new List<string>{"John"},
                     Shares = 0.0m,
                     PricePerShare = 0.0m,
                     SharesOwnedFollowing = 0.0m,
@@ -102,7 +97,7 @@ namespace QuantConnect.DataLibrary.Tests
                 },
                 new QuiverInsiderTradingUniverse
                 {
-                    Name = "",
+                    Name = new List<string>{"Kenny"},
                     Shares = 0.0m,
                     PricePerShare = 0.0m,
                     SharesOwnedFollowing = 0.0m,
