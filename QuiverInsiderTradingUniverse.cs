@@ -101,7 +101,8 @@ namespace QuantConnect.DataSource
         public override BaseData Reader(SubscriptionDataConfig config, string line, DateTime date, bool isLiveMode)
         {
             var csv = line.Split(',');
-            var share = csv[4].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+
+            var shares = csv[4].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
             var price = csv[5].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
             var sharesAfter = csv[6].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
             
@@ -109,7 +110,7 @@ namespace QuantConnect.DataSource
             {
                 Time = Parse.DateTimeExact(csv[2], "yyyyMMdd") - Period,
                 Name = csv[3].Split(";").ToList(),
-                Shares = share,
+                Shares = shares,
                 PricePerShare = price,
                 SharesOwnedFollowing = sharesAfter,
 

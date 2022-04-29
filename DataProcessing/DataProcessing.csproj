@@ -16,7 +16,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="config.json">
+        <None Update="config.json">
+        <Content Include="config.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>
