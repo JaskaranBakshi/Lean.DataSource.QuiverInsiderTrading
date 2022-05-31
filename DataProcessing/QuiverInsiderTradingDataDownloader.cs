@@ -60,7 +60,7 @@ namespace QuantConnect.DataProcessing
             ')'
         };
         private ConcurrentDictionary<string, ConcurrentQueue<string>> _tempData = new();
-        
+
         private readonly JsonSerializerSettings _jsonSerializerSettings = new ()
         {
             DateTimeZoneHandling = DateTimeZoneHandling.Utc
