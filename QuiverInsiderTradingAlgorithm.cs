@@ -25,7 +25,7 @@ namespace QuantConnect.DataLibrary.Tests
     /// <summary>
     /// Example algorithm using the custom data type as a source of alpha
     /// </summary>
-    public class CustomDataAlgorithm : QCAlgorithm
+    public class QuiverInsiderTradingAlgorithm : QCAlgorithm
     {
         private Symbol _customDataSymbol;
         private Symbol _equitySymbol;
@@ -35,10 +35,10 @@ namespace QuantConnect.DataLibrary.Tests
         /// </summary>
         public override void Initialize()
         {
-            SetStartDate(2013, 10, 07);  //Set Start Date
-            SetEndDate(2013, 10, 11);    //Set End Date
-            _equitySymbol = AddEquity("SPY").Symbol;
-            _customDataSymbol = AddData<MyCustomDataType>(_equitySymbol).Symbol;
+            SetStartDate(2022, 02, 17);  //Set Start Date
+            SetEndDate(2022, 02, 22);    //Set End Date
+            _equitySymbol = AddEquity("ALSN").Symbol;
+            _customDataSymbol = AddData<QuiverInsiderTrading>(_equitySymbol).Symbol;
         }
 
         /// <summary>
@@ -47,15 +47,16 @@ namespace QuantConnect.DataLibrary.Tests
         /// <param name="slice">Slice object keyed by symbol containing the stock data</param>
         public override void OnData(Slice slice)
         {
-            var data = slice.Get<MyCustomDataType>();
+            var data = slice.Get<QuiverInsiderTrading>();
             if (!data.IsNullOrEmpty())
             {
                 // based on the custom data property we will buy or short the underlying equity
-                if (data[_customDataSymbol].SomeCustomProperty == "buy")
+                var t = data[_customDataSymbol].Shares;
+                if (t > 0.0m)
                 {
                     SetHoldings(_equitySymbol, 1);
                 }
-                else if (data[_customDataSymbol].SomeCustomProperty == "sell")
+                else if (t < 0.0m)
                 {
                     SetHoldings(_equitySymbol, -1);
                 }
@@ -75,3 +76,4 @@ namespace QuantConnect.DataLibrary.Tests
         }
     }
 }
+

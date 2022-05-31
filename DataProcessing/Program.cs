@@ -1,4 +1,4 @@
-/*
+﻿/*
  * QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
  * Lean Algorithmic Trading Engine v2.0. Copyright 2014 QuantConnect Corporation.
  *
@@ -16,6 +16,7 @@
 using System;
 using System.IO;
 using QuantConnect.Configuration;
+using QuantConnect.DataSource;
 using QuantConnect.Logging;
 using QuantConnect.Util;
 
@@ -37,17 +38,17 @@ namespace QuantConnect.DataProcessing
             var destinationDirectory = Path.Combine(
                 Config.Get("temp-output-directory", "/temp-output-directory"),
                 "alternative",
-                "vendorname");
+                "quiver");
 
-            MyCustomDataDownloader instance = null;
+            QuiverInsiderTradingDataDownloader instance = null;
             try
             {
                 // Pass in the values we got from the configuration into the downloader/converter.
-                instance = new MyCustomDataDownloader(destinationDirectory);
+                instance = new QuiverInsiderTradingDataDownloader(destinationDirectory);
             }
             catch (Exception err)
             {
-                Log.Error(err, $"QuantConnect.DataProcessing.Program.Main(): The downloader/converter for {MyCustomDataDownloader.VendorDataName} {MyCustomDataDownloader.VendorDataName} data failed to be constructed");
+                Log.Error(err, $"QuantConnect.DataProcessing.Program.Main(): The downloader/converter for {QuiverInsiderTradingDataDownloader.VendorDataName} {QuiverInsiderTradingDataDownloader.VendorDataName} data failed to be constructed");
                 Environment.Exit(1);
             }
 
@@ -59,13 +60,13 @@ namespace QuantConnect.DataProcessing
                 var success = instance.Run();
                 if (!success)
                 {
-                    Log.Error($"QuantConnect.DataProcessing.Program.Main(): Failed to download/process {MyCustomDataDownloader.VendorName} {MyCustomDataDownloader.VendorDataName} data");
+                    Log.Error($"QuantConnect.DataProcessing.Program.Main(): Failed to download/process {QuiverInsiderTradingDataDownloader.VendorName} {QuiverInsiderTradingDataDownloader.VendorDataName} data");
                     Environment.Exit(1);
                 }
             }
             catch (Exception err)
             {
-                Log.Error(err, $"QuantConnect.DataProcessing.Program.Main(): The downloader/converter for {MyCustomDataDownloader.VendorDataName} {MyCustomDataDownloader.VendorDataName} data exited unexpectedly");
+                Log.Error(err, $"The downloader/converter for {QuiverInsiderTradingDataDownloader.VendorDataName} {QuiverInsiderTradingDataDownloader.VendorDataName} data exited unexpectedly");
                 Environment.Exit(1);
             }
             finally

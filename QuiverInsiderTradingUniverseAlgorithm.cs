@@ -1,4 +1,4 @@
-﻿/*
+/*
  * QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
  * Lean Algorithmic Trading Engine v2.0. Copyright 2014 QuantConnect Corporation.
  *
@@ -20,12 +20,13 @@ using QuantConnect.Data;
 using QuantConnect.Data.UniverseSelection;
 using QuantConnect.DataSource;
 
+
 namespace QuantConnect.Algorithm.CSharp
 {
     /// <summary>
     /// Example algorithm using the custom data type as a source of alpha
     /// </summary>
-    public class CustomDataUniverse : QCAlgorithm
+    public class QuiverInsiderTradingUniverseAlgorithm : QCAlgorithm
     {
         /// <summary>
         /// Initialise the data and resolution required, as well as the cash and start-end dates for your algorithm. All algorithms must initialized.
@@ -35,25 +36,25 @@ namespace QuantConnect.Algorithm.CSharp
             // Data ADDED via universe selection is added with Daily resolution.
             UniverseSettings.Resolution = Resolution.Daily;
 
-            SetStartDate(2022, 2, 14);
+	        SetStartDate(2022, 2, 14);
             SetEndDate(2022, 2, 18);
             SetCash(100000);
 
             // add a custom universe data source (defaults to usa-equity)
-            AddUniverse<MyCustomDataUniverseType>("MyCustomDataUniverseType", Resolution.Daily, data =>
+            AddUniverse<QuiverInsiderTradingUniverse>("QuiverInsiderTradingUniverse", Resolution.Daily, data =>
             {
                 foreach (var datum in data)
                 {
-                    Log($"{datum.Symbol},{datum.SomeCustomProperty},{datum.SomeNumericProperty}");
+                    Log($"{datum.Symbol},{datum.Name},{datum.Shares},{datum.PricePerShare}");
                 }
 
                 // define our selection criteria
-                return from d in data
-                       where d.SomeCustomProperty == "buy"
-                       select d.Symbol;
+                return from d in data 
+                    where d.SharesOwnedFollowing > 200000
+                    select d.Symbol;
             });
         }
-
+        
         /// <summary>
         /// Event fired each time that we add/remove securities from the data feed
         /// </summary>
