@@ -55,7 +55,8 @@ namespace QuantConnect.DataProcessing
             '(',
             ')'
         };
-        
+        private ConcurrentDictionary<string, ConcurrentQueue<string>> _tempData = new();
+
         private readonly JsonSerializerSettings _jsonSerializerSettings = new ()
         {
             DateTimeZoneHandling = DateTimeZoneHandling.Utc
@@ -105,7 +106,6 @@ namespace QuantConnect.DataProcessing
                 Log.Trace($"QuiverInsiderTradingDataDownloader.Run(): Start processing {count.ToStringInvariant()} companies");
 
                 var tasks = new List<Task>();
-                var tempData = new ConcurrentDictionary<string, ConcurrentDictionary<string, ConcurrentQueue<string>>>();
 
                 foreach (var company in companies)
                 {
@@ -124,6 +124,8 @@ namespace QuantConnect.DataProcessing
 
                     // Begin processing ticker with a normalized value
                     Log.Trace($"QuiverInsiderTradingDataDownloader.Run(): Processing {ticker}");
+
+                    var sid = SecurityIdentifier.GenerateEquity(ticker, Market.USA, true, mapFileProvider, dateTime);
 
                     tasks.Add(
                         HttpRequester($"live/insiders?ticker={ticker}")
@@ -161,13 +163,13 @@ namespace QuantConnect.DataProcessing
                                             continue;
                                         }
 
-                                        if (insiderTrade.Date.Value.Date == today)
+                                        if (insiderTrade.Date == today)
                                         {
                                             Log.Trace($"Encountered data from today for {ticker}: {today:yyyy-MM-dd} - Skipping");
                                             continue;
                                         }
 
-                                        var dateTime = insiderTrade.Date.Value;
+                                        var dateTime = insiderTrade.Date;
                                         var date = $"{dateTime:yyyyMMdd}";
                                         var curRow = $"{insiderTrade.Name.Replace(",", string.Empty).Trim()},{insiderTrade.Shares},{insiderTrade.PricePerShare},{insiderTrade.SharesOwnedFollowing}";
 
@@ -176,10 +178,8 @@ namespace QuantConnect.DataProcessing
                                         if (!_canCreateUniverseFiles)
                                             continue;
 
-                                        var sid = SecurityIdentifier.GenerateEquity(ticker, Market.USA, true, mapFileProvider, dateTime);
-
-                                        var dict = tempData.GetOrAdd(date, new ConcurrentDictionary<string, ConcurrentQueue<string>>());
-                                        var queue = tempData[date].GetOrAdd($"{sid},{ticker}", new ConcurrentQueue<string>());
+                                        var dict = _tempData.GetOrAdd(date, new ConcurrentDictionary<string, ConcurrentQueue<string>>());
+                                        var queue = _tempData[date].GetOrAdd($"{sid},{ticker}", new ConcurrentQueue<string>());
                                         queue.Enqueue(curRow);
                                     }
 
@@ -239,7 +239,7 @@ namespace QuantConnect.DataProcessing
                             }));
                         }
 
-                        tempData.Clear();
+                        _tempData.Clear();
                         tasks.Clear();
                     }
                 }
