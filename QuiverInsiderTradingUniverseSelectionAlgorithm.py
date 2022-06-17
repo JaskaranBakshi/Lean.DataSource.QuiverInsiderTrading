@@ -1,4 +1,4 @@
-﻿# QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
+# QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
 # Lean Algorithmic Trading Engine v2.0. Copyright 2014 QuantConnect Corporation.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@ from AlgorithmImports import *
 ### <summary>
 ### Example algorithm using the custom data type as a source of alpha
 ### </summary>
-class CustomDataUniverse(QCAlgorithm): 
+class QuiverInsiderTradingUniverseSelectionAlgorithm(QCAlgorithm): 
     def Initialize(self):
         ''' Initialise the data and resolution required, as well as the cash and start-end dates for your algorithm. All algorithms must initialized. '''
 
@@ -28,19 +28,16 @@ class CustomDataUniverse(QCAlgorithm):
         self.SetCash(100000)
 
         # add a custom universe data source (defaults to usa-equity)
-        self.AddUniverse(MyCustomDataUniverseType, "MyCustomDataUniverseType", Resolution.Daily, self.UniverseSelection)
+        self.AddUniverse(QuiverInsiderTradingUniverse, "QuiverInsiderTradingUniverse", Resolution.Daily, self.UniverseSelection)
 
     def UniverseSelection(self, data):
         ''' Selected the securities
         
-        :param List of MyCustomUniverseType data: List of MyCustomUniverseType
+        :param List of QuiverInsiderTradingUniverse data: List of QuiverInsiderTradingUniverse
         :return: List of Symbol objects '''
 
-        for datum in data:
-            self.Log(f"{datum.Symbol},{datum.Followers},{datum.DayPercentChange},{datum.WeekPercentChange}")
-        
         # define our selection criteria
-        return [d.Symbol for d in data if d.SomeCustomProperty == 'buy']
+        return [d.Symbol for d in data if d.Value > 0 and d.Shares > 3]
 
     def OnSecuritiesChanged(self, changes):
         ''' Event fired each time that we add/remove securities from the data feed

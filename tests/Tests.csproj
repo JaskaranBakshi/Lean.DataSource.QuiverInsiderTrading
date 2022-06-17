@@ -1,16 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>QuantConnect.DataLibrary.Tests</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\Demonstration.cs" Link="Demonstration.cs" />
-    <Compile Include="..\DemonstrationUniverse.cs" Link="DemonstrationUniverse.cs" />
+    <Compile Include="..\QuiverInsiderTradingAlgorithm.cs" Link="QuiverInsiderTradingAlgorithm.cs" />
+    <Compile Include="..\QuiverInsiderTradingUniverseSelectionAlgorithm.cs" Link="QuiverInsiderTradingUniverseSelectionAlgorithm.cs" />
+    <Content Include="..\QuiverInsiderTradingAlgorithm.py" Link="QuiverInsiderTradingAlgorithm.py" />
+    <Content Include="..\QuiverInsiderTradingUniverseSelectionAlgorithm.py" Link="QuiverInsiderTradingUniverseSelectionAlgorithm.py" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="protobuf-net" Version="3.0.29" />
-    <PackageReference Include="NUnit" Version="3.13.1" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.17.0">
+    <PackageReference Include="NUnit" Version="3.13.3" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.2.1">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />

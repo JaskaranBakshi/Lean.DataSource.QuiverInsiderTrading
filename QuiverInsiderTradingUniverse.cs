@@ -1,4 +1,4 @@
-﻿/*
+/*
  * QUANTCONNECT.COM - Democratizing Finance, Empowering Individuals.
  * Lean Algorithmic Trading Engine v2.0. Copyright 2014 QuantConnect Corporation.
  *
@@ -15,40 +15,54 @@
 */
 
 using System;
-using NodaTime;
-using ProtoBuf;
-using System.IO;
-using QuantConnect.Data;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.Linq;
+using ProtoBuf;
+using NodaTime;
+using QuantConnect.Data;
+using static QuantConnect.StringExtensions;
 
 namespace QuantConnect.DataSource
 {
     /// <summary>
-    /// Example custom data type
+    /// Universe Selection helper class for QuiverQuant InsiderTrading dataset
     /// </summary>
     [ProtoContract(SkipConstructor = true)]
-    public class MyCustomDataUniverseType : BaseData
+    public class QuiverInsiderTradingUniverse : BaseData
     {
-        /// <summary>
-        /// Some custom data property
-        /// </summary>
-        public string SomeCustomProperty { get; set; } 
 
         /// <summary>
-        /// Some custom data property
+        /// Name
         /// </summary>
-        public decimal SomeNumericProperty { get; set; }
+        public List<string> Name { get; set; }
+
+        /// <summary>
+        /// Shares amount in transaction
+        /// </summary>
+        public decimal? Shares { get; set; }
+
+        /// <summary>
+        /// PricePerShare of transaction
+        /// </summary>
+        public decimal? PricePerShare { get; set; }
+
+        /// <summary>
+        /// Shares Owned after transcation
+        /// </summary>
+        public decimal? SharesOwnedFollowing { get; set; }
+
 
         /// <summary>
         /// Time passed between the date of the data and the time the data became available to us
         /// </summary>
-        public TimeSpan Period { get; set; } = TimeSpan.FromDays(1);
+        public TimeSpan _period { get; set; } = TimeSpan.FromDays(1);
 
         /// <summary>
         /// Time the data became available
         /// </summary>
-        public override DateTime EndTime => Time + Period;
+        public override DateTime EndTime => Time + _period;
 
         /// <summary>
         /// Return the URL string source of the file. This will be converted to a stream
@@ -63,7 +77,8 @@ namespace QuantConnect.DataSource
                 Path.Combine(
                     Globals.DataFolder,
                     "alternative",
-                    "mycustomdatatype",
+                    "quiver",
+                    "insidertrading",
                     "universe",
                     $"{date.ToStringInvariant(DateFormat.EightCharacter)}.csv"
                 ),
@@ -81,28 +96,23 @@ namespace QuantConnect.DataSource
         /// <returns>New instance</returns>
         public override BaseData Reader(SubscriptionDataConfig config, string line, DateTime date, bool isLiveMode)
         {
-            var csv = line.Split(','); 
+            var csv = line.Split(',');
 
-            var someNumericProperty = decimal.Parse(csv[2], NumberStyles.Any, CultureInfo.InvariantCulture); 
-
-            return new MyCustomDataUniverseType
+            var shares = csv[4].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+            var price = csv[5].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+            var sharesAfter = csv[6].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+            
+            return new QuiverInsiderTradingUniverse
             {
-                Symbol = new Symbol(SecurityIdentifier.Parse(csv[0]), csv[1]),
-                SomeNumericProperty = someNumericProperty,
-                SomeCustomProperty = csv[3],
-                Time =  date - Period,
-                Value = someNumericProperty
-            };
-        }
+                Time = Parse.DateTimeExact(csv[2], "yyyyMMdd") - _period,
+                Name = csv[3].Split(";").ToList(),
+                Shares = shares,
+                PricePerShare = price,
+                SharesOwnedFollowing = sharesAfter,
 
-        /// <summary>
-        /// Indicates whether the data is sparse.
-        /// If true, we disable logging for missing files
-        /// </summary>
-        /// <returns>true</returns>
-        public override bool IsSparseData()
-        {
-            return true;
+                Symbol = new Symbol(SecurityIdentifier.Parse(csv[0]), csv[1]),
+                Value = price ?? 0
+            };
         }
 
         /// <summary>
@@ -110,7 +120,11 @@ namespace QuantConnect.DataSource
         /// </summary>
         public override string ToString()
         {
-            return $"{Symbol} - {Value}";
+            return Invariant($"{Symbol}({Time}) :: ") +
+                   Invariant($"Name: {string.Join(';', Name)} ") +
+                   Invariant($"Shares: {Shares} ") +
+                   Invariant($"PricePerShare: {PricePerShare} ") +
+                   Invariant($"SharesOwnedFollowing: {SharesOwnedFollowing}");
         }
 
         /// <summary>
@@ -135,7 +149,7 @@ namespace QuantConnect.DataSource
         /// <returns>The <see cref="T:NodaTime.DateTimeZone" /> of this data type</returns>
         public override DateTimeZone DataTimeZone()
         {
-            return DateTimeZone.Utc;
+            return TimeZones.Chicago;
         }
     }
 }

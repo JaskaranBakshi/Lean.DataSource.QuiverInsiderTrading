@@ -1,15 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>QuantConnect.DataSource</RootNamespace>
-    <AssemblyName>QuantConnect.DataSource.MyCustonDataType</AssemblyName>
+    <AssemblyName>QuantConnect.DataSource.QuiverInsiderTrading</AssemblyName>
     <OutputPath>bin\$(Configuration)</OutputPath>
-    <DocumentationFile>$(OutputPath)\QuantConnect.DataSource.MyCustonDataType.xml</DocumentationFile>
+    <DocumentationFile>$(OutputPath)\QuantConnect.DataSource.QuiverInsiderTrading.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="QuantConnect.Common" Version="2.5.*" />
-    <PackageReference Include="protobuf-net" Version="3.0.29" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
 
@@ -20,8 +20,9 @@
     <Compile Remove="DataProcessing\**" />
     <EmbeddedResource Remove="DataProcessing\**" />
     <None Remove="DataProcessing\**" />
-    <Compile Remove="Demonstration.cs" />
-    <Compile Remove="DemonstrationUniverse.cs" />
+    <Compile Remove="QuiverInsiderTradingAlgorithm.cs" />
+    <Compile Remove="QuiverInsiderTradingUniverseSelectionAlgorithm.cs" />
     <None Remove=".gitignore" />
   </ItemGroup>
+
 </Project>

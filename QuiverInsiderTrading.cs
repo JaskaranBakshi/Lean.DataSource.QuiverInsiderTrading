@@ -14,36 +14,66 @@
  *
 */
 
-using System;
+using Microsoft.VisualBasic.FileIO;
+using Newtonsoft.Json;
 using NodaTime;
 using ProtoBuf;
-using System.IO;
 using QuantConnect.Data;
+using QuantConnect.Util;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 
 namespace QuantConnect.DataSource
 {
     /// <summary>
-    /// Example custom data type
+    /// Insider Trading by private businesses
     /// </summary>
-    [ProtoContract(SkipConstructor = true)]
-    public class MyCustomDataType : BaseData
+    public class QuiverInsiderTrading : BaseData
     {
-        /// <summary>
-        /// Some custom data property
-        /// </summary>
-        [ProtoMember(2000)]
-        public string SomeCustomProperty { get; set; }
 
         /// <summary>
-        /// Time passed between the date of the data and the time the data became available to us
+        /// Date
         /// </summary>
-        public TimeSpan Period { get; set; } = TimeSpan.FromDays(1);
+        [JsonProperty(PropertyName = "Date")]
+        [JsonConverter(typeof(DateTimeJsonConverter), "yyyy-MM-dd")]
+        public DateTime? Date { get; set; }
 
         /// <summary>
-        /// Time the data became available
+        /// Name
         /// </summary>
-        public override DateTime EndTime => Time + Period;
+        [JsonProperty(PropertyName = "Name")]
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Shares amount in transaction
+        /// </summary>
+        [JsonProperty(PropertyName = "Shares")]
+        public decimal? Shares { get; set; }
+
+        /// <summary>
+        /// PricePerShare of transaction
+        /// </summary>
+        [JsonProperty(PropertyName = "PricePerShare")]
+        public decimal? PricePerShare { get; set; }
+
+        /// <summary>
+        /// Shares Owned after transcation
+        /// </summary>
+        [JsonProperty(PropertyName = "SharesOwnedFollowing")]
+        public decimal? SharesOwnedFollowing { get; set; }
+
+        /// <summary>
+        /// The period of time that occurs between the starting time and ending time of the data point
+        /// </summary>
+        private TimeSpan _period = TimeSpan.FromDays(1);
+
+        /// <summary>
+        /// The time the data point ends at and becomes available to the algorithm
+        /// </summary>
+        public override DateTime EndTime => Time + _period;
+
 
         /// <summary>
         /// Return the URL string source of the file. This will be converted to a stream
@@ -58,7 +88,8 @@ namespace QuantConnect.DataSource
                 Path.Combine(
                     Globals.DataFolder,
                     "alternative",
-                    "mycustomdatatype",
+                    "quiver",
+                    "insidertrading",
                     $"{config.Symbol.Value.ToLowerInvariant()}.csv"
                 ),
                 SubscriptionTransportMedium.LocalFile
@@ -77,27 +108,19 @@ namespace QuantConnect.DataSource
         {
             var csv = line.Split(',');
 
-            var parsedDate = Parse.DateTimeExact(csv[0], "yyyyMMdd");
-            return new MyCustomDataType
-            {
-                Symbol = config.Symbol,
-                SomeCustomProperty = csv[1],
-                Time = parsedDate - Period,
-            };
-        }
+            var parsedDate = Parse.DateTimeExact(csv[0], "yyyyMMdd");//, "'yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\''" 
 
-        /// <summary>
-        /// Clones the data
-        /// </summary>
-        /// <returns>A clone of the object</returns>
-        public override BaseData Clone()
-        {
-            return new MyCustomDataType
+            return new QuiverInsiderTrading
             {
-                Symbol = Symbol,
-                Time = Time,
-                EndTime = EndTime,
-                SomeCustomProperty = SomeCustomProperty,
+                Name = csv[1],
+
+                Shares = csv[2].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture)),
+                PricePerShare = csv[3].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture)),
+                SharesOwnedFollowing = csv[4].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture)),
+                Date = parsedDate,
+                Time = parsedDate,
+                _period = TimeSpan.FromDays(1),
+                Symbol = config.Symbol,
             };
         }
 
@@ -125,7 +148,7 @@ namespace QuantConnect.DataSource
         /// </summary>
         public override string ToString()
         {
-            return $"{Symbol} - {SomeCustomProperty}";
+            return $"{Symbol} - {Name} - {Shares} - {PricePerShare} - {SharesOwnedFollowing} ";
         }
 
         /// <summary>

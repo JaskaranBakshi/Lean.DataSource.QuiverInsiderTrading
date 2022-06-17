@@ -1,0 +1,195 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>QuantConnect.DataSource</name>
+    </assembly>
+    <members>
+        <member name="T:QuantConnect.DataProcessing.Program">
+            <summary>
+            Entrypoint for the data downloader/converter
+            </summary>
+        </member>
+        <member name="M:QuantConnect.DataProcessing.Program.Main">
+            <summary>
+            Entrypoint of the program
+            </summary>
+            <returns>Exit code. 0 equals successful, and any other value indicates the downloader/converter failed.</returns>
+        </member>
+        <member name="T:QuantConnect.DataProcessing.QuiverInsiderTradingDataDownloader">
+            <summary>
+            QuiverInsiderTradingDataDownloader implementation. https://www.quiverquant.com/
+            </summary>
+        </member>
+        <member name="F:QuantConnect.DataProcessing.QuiverInsiderTradingDataDownloader._indexGate">
+            <summary>
+            Control the rate of download per unit of time.
+            </summary>
+        </member>
+        <member name="M:QuantConnect.DataProcessing.QuiverInsiderTradingDataDownloader.#ctor(System.String,System.String)">
+            <summary>
+            Creates a new instance of <see cref="T:QuantConnect.DataSource.InsiderTrading"/>
+            </summary>
+            <param name="destinationFolder">The folder where the data will be saved</param>
+            <param name="apiKey">The QuiverQuant API key</param>
+        </member>
+        <member name="M:QuantConnect.DataProcessing.QuiverInsiderTradingDataDownloader.Run">
+            <summary>
+            Runs the instance of the object.
+            </summary>
+            <returns>True if process all downloads successfully</returns>
+        </member>
+        <member name="M:QuantConnect.DataProcessing.QuiverInsiderTradingDataDownloader.GetCompanies">
+            <summary>
+            Gets the list of companies
+            </summary>
+            <returns>List of companies</returns>
+            <exception cref="T:System.Exception"></exception>
+        </member>
+        <member name="M:QuantConnect.DataProcessing.QuiverInsiderTradingDataDownloader.HttpRequester(System.String)">
+            <summary>
+            Sends a GET request for the provided URL
+            </summary>
+            <param name="url">URL to send GET request for</param>
+            <returns>Content as string</returns>
+            <exception cref="T:System.Exception">Failed to get data after exceeding retries</exception>
+        </member>
+        <member name="M:QuantConnect.DataProcessing.QuiverInsiderTradingDataDownloader.SaveContentToFile(System.String,System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Saves contents to disk, deleting existing zip files
+            </summary>
+            <param name="destinationFolder">Final destination of the data</param>
+            <param name="ticker">Stock ticker</param>
+            <param name="contents">Contents to write</param>
+        </member>
+        <member name="M:QuantConnect.DataProcessing.QuiverInsiderTradingDataDownloader.TryNormalizeDefunctTicker(System.String,System.String@)">
+            <summary>
+            Tries to normalize a potentially defunct ticker into a normal ticker.
+            </summary>
+            <param name="ticker">Ticker as received from Estimize</param>
+            <param name="nonDefunctTicker">Set as the non-defunct ticker</param>
+            <returns>true for success, false for failure</returns>
+        </member>
+        <member name="M:QuantConnect.DataProcessing.QuiverInsiderTradingDataDownloader.NormalizeTicker(System.String)">
+            <summary>
+            Normalizes Estimize tickers to a format usable by the <see cref="T:QuantConnect.Data.Auxiliary.MapFileResolver"/>
+            </summary>
+            <param name="ticker">Ticker to normalize</param>
+            <returns>Normalized ticker</returns>
+        </member>
+        <member name="P:QuantConnect.DataProcessing.QuiverInsiderTradingDataDownloader.Company.Name">
+            <summary>
+            The name of the company
+            </summary>
+        </member>
+        <member name="P:QuantConnect.DataProcessing.QuiverInsiderTradingDataDownloader.Company.Ticker">
+            <summary>
+            The ticker/symbol for the company
+            </summary>
+        </member>
+        <member name="M:QuantConnect.DataProcessing.QuiverInsiderTradingDataDownloader.Dispose">
+            <summary>
+            Disposes of unmanaged resources
+            </summary>
+        </member>
+        <member name="T:QuantConnect.DataSource.InsiderTrading">
+            <summary>
+            Example custom data type
+            </summary>
+        </member>
+        <member name="P:QuantConnect.DataSource.InsiderTrading.Date">
+            <summary>
+            Date
+            </summary>
+        </member>
+        <member name="P:QuantConnect.DataSource.InsiderTrading.Name">
+            <summary>
+            Name
+            </summary>
+        </member>
+        <member name="P:QuantConnect.DataSource.InsiderTrading.Shares">
+            <summary>
+            Shares
+            </summary>
+        </member>
+        <member name="P:QuantConnect.DataSource.InsiderTrading.PricePerShare">
+            <summary>
+            PricePerShare
+            </summary>
+        </member>
+        <member name="P:QuantConnect.DataSource.InsiderTrading.SharesOwnedFollowing">
+            <summary>
+            SharesOwnedFollowing
+            </summary>
+        </member>
+        <member name="P:QuantConnect.DataSource.InsiderTrading.Period">
+            <summary>
+            The period of time that occurs between the starting time and ending time of the data point
+            </summary>
+        </member>
+        <member name="P:QuantConnect.DataSource.InsiderTrading.EndTime">
+            <summary>
+            The time the data point ends at and becomes available to the algorithm
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:QuantConnect.DataSource.InsiderTrading.#ctor" -->
+        <member name="M:QuantConnect.DataSource.InsiderTrading.#ctor(System.String)">
+            <summary>
+            Creates a new instance of QuiverCongress from a CSV line
+            </summary>
+            <param name="csvLine">CSV line</param>
+        </member>
+        <member name="M:QuantConnect.DataSource.InsiderTrading.GetSource(QuantConnect.Data.SubscriptionDataConfig,System.DateTime,System.Boolean)">
+            <summary>
+            Return the URL string source of the file. This will be converted to a stream
+            </summary>
+            <param name="config">Configuration object</param>
+            <param name="date">Date of this source file</param>
+            <param name="isLiveMode">true if we're in live mode, false for backtesting mode</param>
+            <returns>String URL of source file.</returns>
+        </member>
+        <member name="M:QuantConnect.DataSource.InsiderTrading.Reader(QuantConnect.Data.SubscriptionDataConfig,System.String,System.DateTime,System.Boolean)">
+            <summary>
+            Parses the data from the line provided and loads it into LEAN
+            </summary>
+            <param name="config">Subscription configuration</param>
+            <param name="line">Line of data</param>
+            <param name="date">Date</param>
+            <param name="isLiveMode">Is live mode</param>
+            <returns>New instance</returns>
+        </member>
+        <member name="M:QuantConnect.DataSource.InsiderTrading.RequiresMapping">
+            <summary>
+            Indicates whether the data source is tied to an underlying symbol and requires that corporate events be applied to it as well, such as renames and delistings
+            </summary>
+            <returns>false</returns>
+        </member>
+        <member name="M:QuantConnect.DataSource.InsiderTrading.IsSparseData">
+            <summary>
+            Indicates whether the data is sparse.
+            If true, we disable logging for missing files
+            </summary>
+            <returns>true</returns>
+        </member>
+        <member name="M:QuantConnect.DataSource.InsiderTrading.ToString">
+            <summary>
+            Converts the instance to string
+            </summary>
+        </member>
+        <member name="M:QuantConnect.DataSource.InsiderTrading.DefaultResolution">
+            <summary>
+            Gets the default resolution for this data and security type
+            </summary>
+        </member>
+        <member name="M:QuantConnect.DataSource.InsiderTrading.SupportedResolutions">
+            <summary>
+            Gets the supported resolution for this data and security type
+            </summary>
+        </member>
+        <member name="M:QuantConnect.DataSource.InsiderTrading.DataTimeZone">
+            <summary>
+            Specifies the data time zone for this data type. This is useful for custom data types
+            </summary>
+            <returns>The <see cref="T:NodaTime.DateTimeZone" /> of this data type</returns>
+        </member>
+    </members>
+</doc>
