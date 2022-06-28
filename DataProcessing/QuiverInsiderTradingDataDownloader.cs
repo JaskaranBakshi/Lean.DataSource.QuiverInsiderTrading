@@ -147,6 +147,7 @@ namespace QuantConnect.DataProcessing
 
                                     foreach (var insiderTrade in insiderTrades)
                                     {
+                                        // Shift back 1 day as the Time of the bar starts, as the Data attribute in JSON is the time receiving the aggregated data
                                         var dateTime = insiderTrade.Date.AddDays(-1);
 
                                         if (dateTime == null)
