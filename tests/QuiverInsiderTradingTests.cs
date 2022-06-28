@@ -67,7 +67,7 @@ namespace QuantConnect.DataLibrary.Tests
             return new QuiverInsiderTrading
             {
                 Symbol = Symbol.Empty,
-                Time = DateTime.Today,
+                EndTime = DateTime.Today,
                 DataType = MarketDataType.Base,
                 Name = "Institution name",
                 Shares = 0.0m,
