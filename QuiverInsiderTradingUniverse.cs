@@ -97,7 +97,7 @@ namespace QuantConnect.DataSource
             
             return new QuiverInsiderTradingUniverse
             {
-                Time = date.Date,
+                Time = date.Date - _period,
                 Name = csv[2],
                 Shares = shares,
                 PricePerShare = price,
