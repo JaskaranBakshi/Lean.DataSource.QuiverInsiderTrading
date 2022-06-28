@@ -59,11 +59,7 @@ namespace QuantConnect.DataSource
         /// <summary>
         /// The time the data point ends at and becomes available to the algorithm
         /// </summary>
-        [JsonProperty(PropertyName = "Date")]
-        [JsonConverter(typeof(DateTimeJsonConverter), "yyyy-MM-dd")]
-        public override DateTime EndTime { get; set; }
-
-        public DateTime Time => EndTime - _period;
+        public override DateTime EndTime => Time + _period;
 
         /// <summary>
         /// Return the URL string source of the file. This will be converted to a stream
@@ -106,7 +102,7 @@ namespace QuantConnect.DataSource
                 Shares = csv[2].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture)),
                 PricePerShare = csv[3].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture)),
                 SharesOwnedFollowing = csv[4].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture)),
-                EndTime = parsedDate,
+                Time = parsedDate,
                 Symbol = config.Symbol
             };
         }

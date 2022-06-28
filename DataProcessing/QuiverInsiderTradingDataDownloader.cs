@@ -141,13 +141,13 @@ namespace QuantConnect.DataProcessing
                                     }
 
                                     var insiderTrades =
-                                        JsonConvert.DeserializeObject<List<QuiverInsiderTrading>>(result,
+                                        JsonConvert.DeserializeObject<List<RawInsiderTrading>>(result,
                                             _jsonSerializerSettings);
                                     var csvContents = new List<string>();
 
                                     foreach (var insiderTrade in insiderTrades)
                                     {
-                                        var dateTime = insiderTrade.EndTime;
+                                        var dateTime = insiderTrade.Date.AddDays(-1);
 
                                         if (dateTime == null)
                                         {
@@ -375,6 +375,16 @@ namespace QuantConnect.DataProcessing
             /// </summary>
             [JsonProperty(PropertyName = "Ticker")]
             public string Ticker { get; set; }
+        }
+
+        private class RawInsiderTrading : QuiverInsiderTrading
+        {
+            /// <summary>
+            /// The time the data point ends at and becomes available to the algorithm
+            /// </summary>
+            [JsonProperty(PropertyName = "Date")]
+            [JsonConverter(typeof(DateTimeJsonConverter), "yyyy-MM-dd")]
+            public DateTime Date { get; set; }
         }
 
         /// <summary>
