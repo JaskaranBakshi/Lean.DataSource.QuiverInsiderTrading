@@ -147,18 +147,19 @@ namespace QuantConnect.DataProcessing
 
                                     foreach (var insiderTrade in insiderTrades)
                                     {
-                                        if (insiderTrade.Date == null)
+                                        var dateTime = insiderTrade.EndTime;
+
+                                        if (dateTime == null)
                                         {
                                             continue;
                                         }
 
-                                        if (insiderTrade.Date == today)
+                                        if (dateTime == today || dateTime == DateTime.MinValue)
                                         {
-                                            Log.Trace($"Encountered data from today for {ticker}: {today:yyyy-MM-dd} - Skipping");
+                                            Log.Trace($"Encountered data from invalid date: {dateTime:yyyy-MM-dd} - Skipping");
                                             continue;
                                         }
 
-                                        var dateTime = insiderTrade.Date;
                                         var date = $"{dateTime:yyyyMMdd}";
                                         var curRow = $"{insiderTrade.Name.Replace(",", string.Empty).Trim().ToLower()},{insiderTrade.Shares},{insiderTrade.PricePerShare},{insiderTrade.SharesOwnedFollowing}";
 
@@ -167,7 +168,7 @@ namespace QuantConnect.DataProcessing
                                         if (!_canCreateUniverseFiles)
                                             continue;
 
-                                        var sid = SecurityIdentifier.GenerateEquity(ticker, Market.USA, true, mapFileProvider, today);
+                                        var sid = SecurityIdentifier.GenerateEquity(ticker, Market.USA, true, mapFileProvider, dateTime);
                                         var queue = _tempData.GetOrAdd(date, new ConcurrentQueue<string>());
                                         //universe creation
                                         queue.Enqueue($"{sid},{ticker},{curRow}");
@@ -296,7 +297,7 @@ namespace QuantConnect.DataProcessing
             var finalPath = Path.Combine(destinationFolder, $"{name.ToLowerInvariant()}.csv");
 
             var lines = new HashSet<string>(contents);
-             if (File.Exists(finalPath))
+            if (File.Exists(finalPath))
             {
                 foreach (var line in File.ReadAllLines(finalPath))
                 {
@@ -309,10 +310,7 @@ namespace QuantConnect.DataProcessing
                 : lines.OrderBy(x => DateTime.ParseExact(x.Split(',').First(), "yyyyMMdd",
                     CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal));
 
-            var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.tmp");
-            File.WriteAllLines(tempPath, finalLines);
-            var tempFilePath = new FileInfo(tempPath);
-            tempFilePath.MoveTo(finalPath, true);
+            File.WriteAllLines(finalPath, finalLines);
         }
 
         /// <summary>

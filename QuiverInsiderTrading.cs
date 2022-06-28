@@ -14,10 +14,8 @@
  *
 */
 
-using Microsoft.VisualBasic.FileIO;
 using Newtonsoft.Json;
 using NodaTime;
-using ProtoBuf;
 using QuantConnect.Data;
 using QuantConnect.Util;
 using System;
@@ -32,13 +30,7 @@ namespace QuantConnect.DataSource
     /// </summary>
     public class QuiverInsiderTrading : BaseData
     {
-
-        /// <summary>
-        /// Date
-        /// </summary>
-        [JsonProperty(PropertyName = "Date")]
-        [JsonConverter(typeof(DateTimeJsonConverter), "yyyy-MM-dd")]
-        public DateTime? Date { get; set; }
+        private static readonly TimeSpan _period = TimeSpan.FromDays(1);
 
         /// <summary>
         /// Name
@@ -65,15 +57,13 @@ namespace QuantConnect.DataSource
         public decimal? SharesOwnedFollowing { get; set; }
 
         /// <summary>
-        /// The period of time that occurs between the starting time and ending time of the data point
-        /// </summary>
-        private TimeSpan _period = TimeSpan.FromDays(1);
-
-        /// <summary>
         /// The time the data point ends at and becomes available to the algorithm
         /// </summary>
-        public override DateTime EndTime => Time + _period;
+        [JsonProperty(PropertyName = "Date")]
+        [JsonConverter(typeof(DateTimeJsonConverter), "yyyy-MM-dd")]
+        public override DateTime EndTime { get; set; }
 
+        public DateTime Time => EndTime - _period;
 
         /// <summary>
         /// Return the URL string source of the file. This will be converted to a stream
@@ -113,14 +103,11 @@ namespace QuantConnect.DataSource
             return new QuiverInsiderTrading
             {
                 Name = csv[1],
-
                 Shares = csv[2].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture)),
                 PricePerShare = csv[3].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture)),
                 SharesOwnedFollowing = csv[4].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture)),
-                Date = parsedDate,
-                Time = parsedDate,
-                _period = TimeSpan.FromDays(1),
-                Symbol = config.Symbol,
+                EndTime = parsedDate,
+                Symbol = config.Symbol
             };
         }
 
