@@ -15,10 +15,7 @@
 */
 
 using System;
-using ProtoBuf;
-using System.IO;
 using System.Linq;
-using ProtoBuf.Meta;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using QuantConnect.Data;
@@ -72,11 +69,10 @@ namespace QuantConnect.DataLibrary.Tests
                 Symbol = Symbol.Empty,
                 Time = DateTime.Today,
                 DataType = MarketDataType.Base,
-                Date=DateTime.Today,
                 Name = "Institution name",
                 Shares = 0.0m,
                 PricePerShare = 0.0m,
-                SharesOwnedFollowing = 0.0m,
+                SharesOwnedFollowing = 0.0m
             };
         }
     }

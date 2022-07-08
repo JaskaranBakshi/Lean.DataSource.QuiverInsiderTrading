@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using ProtoBuf;
 using NodaTime;
 using QuantConnect.Data;
 using static QuantConnect.StringExtensions;
@@ -29,14 +28,14 @@ namespace QuantConnect.DataSource
     /// <summary>
     /// Universe Selection helper class for QuiverQuant InsiderTrading dataset
     /// </summary>
-    [ProtoContract(SkipConstructor = true)]
     public class QuiverInsiderTradingUniverse : BaseData
     {
+        private static readonly TimeSpan _period = TimeSpan.FromDays(1);
 
         /// <summary>
         /// Name
         /// </summary>
-        public List<string> Name { get; set; }
+        public string Name { get; set; }
 
         /// <summary>
         /// Shares amount in transaction
@@ -52,12 +51,6 @@ namespace QuantConnect.DataSource
         /// Shares Owned after transcation
         /// </summary>
         public decimal? SharesOwnedFollowing { get; set; }
-
-
-        /// <summary>
-        /// Time passed between the date of the data and the time the data became available to us
-        /// </summary>
-        public TimeSpan _period { get; set; } = TimeSpan.FromDays(1);
 
         /// <summary>
         /// Time the data became available
@@ -98,14 +91,14 @@ namespace QuantConnect.DataSource
         {
             var csv = line.Split(',');
 
-            var shares = csv[4].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
-            var price = csv[5].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
-            var sharesAfter = csv[6].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+            var shares = csv[3].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+            var price = csv[4].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
+            var sharesAfter = csv[5].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture));
             
             return new QuiverInsiderTradingUniverse
             {
-                Time = Parse.DateTimeExact(csv[2], "yyyyMMdd") - _period,
-                Name = csv[3].Split(";").ToList(),
+                Time = date,
+                Name = csv[2],
                 Shares = shares,
                 PricePerShare = price,
                 SharesOwnedFollowing = sharesAfter,
