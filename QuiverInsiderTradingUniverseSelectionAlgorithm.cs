@@ -15,10 +15,9 @@
 */
 
 using System.Linq;
-using QuantConnect.Data;
+using System.Collections.Generic;
 using QuantConnect.Data.UniverseSelection;
 using QuantConnect.DataSource;
-using QuantConnect.Orders;
 
 namespace QuantConnect.Algorithm.CSharp
 {
@@ -42,15 +41,25 @@ namespace QuantConnect.Algorithm.CSharp
             // add a custom universe data source (defaults to usa-equity)
             AddUniverse<QuiverInsiderTradingUniverse>("QuiverInsiderTradingUniverse", Resolution.Daily, data =>
             {
+                var symbolData = new Dictionary<Symbol, List<QuiverInsiderTradingUniverse>>();
+
                 foreach (var datum in data)
                 {
-                    Log($"{datum.Symbol},{datum.Name},{datum.Shares},{datum.PricePerShare},{datum.SharesOwnedFollowing}");
+                    var symbol = datum.Symbol;
+
+                    Log($"{symbol},{datum.Shares},{datum.PricePerShare},{datum.SharesOwnedFollowing}");
+
+                    if (!symbolData.ContainsKey(symbol))
+                    {
+                        symbolData.Add(symbol, new List<QuiverInsiderTradingUniverse>());
+                    }
+                    symbolData[symbol].Add(datum);
                 }
 
                 // define our selection criteria
-                return from d in data 
-                    where d.SharesOwnedFollowing > 200000
-                    select d.Symbol;
+                return from kvp in symbolData
+                       where kvp.Value.Count >= 2 && kvp.Value.Sum(x => x.Shares * x.PricePerShare) > 100000m
+                       select kvp.Key;
             });
         }
         

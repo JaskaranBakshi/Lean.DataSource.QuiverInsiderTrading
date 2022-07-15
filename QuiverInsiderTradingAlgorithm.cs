@@ -38,7 +38,7 @@ namespace QuantConnect.DataLibrary.Tests
             SetStartDate(2022, 02, 17);  //Set Start Date
             SetEndDate(2022, 02, 22);    //Set End Date
             _equitySymbol = AddEquity("ALSN").Symbol;
-            _customDataSymbol = AddData<QuiverInsiderTrading>(_equitySymbol).Symbol;
+            _customDataSymbol = AddData<QuiverInsiderTradings>(_equitySymbol).Symbol;
         }
 
         /// <summary>
@@ -47,19 +47,24 @@ namespace QuantConnect.DataLibrary.Tests
         /// <param name="slice">Slice object keyed by symbol containing the stock data</param>
         public override void OnData(Slice slice)
         {
-            var data = slice.Get<QuiverInsiderTrading>();
+            var data = slice.Get<QuiverInsiderTradings>();
             if (!data.IsNullOrEmpty())
             {
-                // based on the custom data property we will buy or short the underlying equity
-                var t = data[_customDataSymbol].Shares;
-                
-                if (t > 0.0m)
+                foreach (var insiderTrades in data.Values)
                 {
-                    SetHoldings(_equitySymbol, 1);
-                }
-                else if (t < 0.0m)
-                {
-                    SetHoldings(_equitySymbol, -1);
+                    Log($"{Time} {insiderTrades.ToString()}");
+                    foreach (QuiverInsiderTrading insiderTrade in insiderTrades)
+                    {
+                        // based on the custom data property we will buy or short the underlying equity
+                        if (insiderTrade.Shares > 0)
+                        {
+                            SetHoldings(_equitySymbol, 1);
+                        }
+                        else
+                        {
+                            SetHoldings(_equitySymbol, -1);
+                        }
+                    }
                 }
             }
         }

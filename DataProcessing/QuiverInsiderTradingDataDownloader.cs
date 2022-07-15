@@ -45,17 +45,10 @@ namespace QuantConnect.DataProcessing
         
         private readonly string _destinationFolder;
         private readonly string _universeFolder;
+        private readonly string _processedDataDirectory;
         private readonly bool _canCreateUniverseFiles;
         private readonly string _clientKey;
         private readonly int _maxRetries = 5;
-        private static readonly List<char> _defunctDelimiters = new List<char>
-        {
-            '-',
-            '$',
-            '(',
-            ')'
-        };
-        private ConcurrentDictionary<string, ConcurrentQueue<string>> _tempData = new();
 
         private readonly JsonSerializerSettings _jsonSerializerSettings = new ()
         {
@@ -71,11 +64,14 @@ namespace QuantConnect.DataProcessing
         /// Creates a new instance of <see cref="QuiverInsiderTrading"/>
         /// </summary>
         /// <param name="destinationFolder">The folder where the data will be saved</param>
+        /// <param name="processedDataDirectory">The folder where the data will be read from</param>
         /// <param name="apiKey">The QuiverQuant API key</param>
-        public QuiverInsiderTradingDataDownloader(string destinationFolder, string apiKey = null)
+        public QuiverInsiderTradingDataDownloader(string destinationFolder, string processedDataDirectory, string apiKey = null)
         {
-            _destinationFolder = Path.Combine(destinationFolder, VendorDataName);
+            _destinationFolder = Path.Combine(destinationFolder, VendorName, VendorDataName);
             _universeFolder = Path.Combine(_destinationFolder, "universe");
+            _processedDataDirectory = Path.Combine(processedDataDirectory, VendorName, VendorDataName);
+
             _clientKey = apiKey ?? Config.Get("vendor-auth-token");
             _canCreateUniverseFiles = Directory.Exists(Path.Combine(Globals.DataFolder, "equity", "usa", "map_files"));
 
@@ -86,119 +82,65 @@ namespace QuantConnect.DataProcessing
         }
 
         /// <summary>
-        /// Runs the instance of the object.
+        /// Runs the instance of the object with a given date.
         /// </summary>
+        /// <param name="processDate">The date of data to be fetched and processed</param>
         /// <returns>True if process all downloads successfully</returns>
-        public bool Run()
+        public bool Run(DateTime processDate)
         {
             var stopwatch = Stopwatch.StartNew();
+            Log.Trace($"QuiverInsiderTradingDataDownloader.Run(): Start downloading/processing QuiverQuant Insider Trading data");
+
             var today = DateTime.UtcNow.Date;
-
-            var mapFileProvider = new LocalZipMapFileProvider();
-            mapFileProvider.Initialize(new DefaultDataProvider());
-
             try
             {
-                var companies = GetCompanies().Result.DistinctBy(x => x.Ticker).ToList();
-                var count = companies.Count;
-                var companiesCompleted = 0;
-
-                Log.Trace($"QuiverInsiderTradingDataDownloader.Run(): Start processing {count.ToStringInvariant()} companies");
-
-                var tasks = new List<Task>();
-
-                foreach (var company in companies)
+                if (processDate >= today || processDate == DateTime.MinValue)
                 {
-                    var quiverTicker = company.Ticker;
-                    string ticker;
-
-                    if (!TryNormalizeDefunctTicker(quiverTicker, out ticker))
-                    {
-                        Log.Error( $"QuiverInsiderTradingDataDownloader(): Defunct ticker {quiverTicker} is unable to be parsed. Continuing...");
-                        continue;
-                    }
-
-                    // Begin processing ticker with a normalized value
-                    Log.Trace($"QuiverInsiderTradingDataDownloader.Run(): Processing {ticker}");
-
-                    tasks.Add(
-                        HttpRequester($"live/insiders?ticker={ticker}")
-                            .ContinueWith(
-                                y =>
-                                {
-                                    if (y.IsFaulted)
-                                    {
-                                        Log.Error(
-                                            $"QuiverInsiderTradingDataDownloader.Run(): Failed to get data for {company}");
-                                        return;
-                                    }
-
-                                    var result = y.Result;
-                                    if (string.IsNullOrEmpty(result))
-                                    {
-                                        // We've already logged inside HttpRequester
-                                        return;
-                                    }
-
-                                    var insiderTrades =
-                                        JsonConvert.DeserializeObject<List<RawInsiderTrading>>(result,
-                                            _jsonSerializerSettings);
-                                    var csvContents = new List<string>();
-
-                                    foreach (var insiderTrade in insiderTrades)
-                                    {
-                                        // Shift back 1 day as the Time of the bar starts, as the Data attribute in JSON is the time receiving the aggregated data
-                                        var dateTime = insiderTrade.Date.AddDays(-1);
-
-                                        if (dateTime == null)
-                                        {
-                                            continue;
-                                        }
-
-                                        if (dateTime == today || dateTime == DateTime.MinValue)
-                                        {
-                                            Log.Trace($"Encountered data from invalid date: {dateTime:yyyy-MM-dd} - Skipping");
-                                            continue;
-                                        }
-
-                                        var date = $"{dateTime:yyyyMMdd}";
-                                        var curRow = $"{insiderTrade.Name.Replace(",", string.Empty).Trim().ToLower()},{insiderTrade.Shares},{insiderTrade.PricePerShare},{insiderTrade.SharesOwnedFollowing}";
-
-                                        csvContents.Add($"{date},{curRow}");
-
-                                        if (!_canCreateUniverseFiles)
-                                            continue;
-
-                                        var sid = SecurityIdentifier.GenerateEquity(ticker, Market.USA, true, mapFileProvider, dateTime);
-                                        var queue = _tempData.GetOrAdd(date, new ConcurrentQueue<string>());
-                                        //universe creation
-                                        queue.Enqueue($"{sid},{ticker},{curRow}");
-                                    }
-
-                                    if (csvContents.Count != 0)
-                                    {
-                                        SaveContentToFile(_destinationFolder, ticker, csvContents);
-                                    }
-
-                                    var newCompaniesCompleted = Interlocked.Increment(ref companiesCompleted);
-                                    if (newCompaniesCompleted % 100 == 0)
-                                    {
-                                        Log.Trace($"QuiverInsiderTradingDataDownloader.Run(): {newCompaniesCompleted}/{count} complete");
-                                    }
-                                }
-                            )
-                    );
-                    if (tasks.Count != 10) continue;
-
-                    Task.WaitAll(tasks.ToArray());
-
-                    foreach (var kvp in _tempData){
-                        SaveContentToFile(_universeFolder, kvp.Key, kvp.Value);
-                    }
-
-                    _tempData.Clear();
-                    tasks.Clear();
+                    Log.Trace($"Encountered data from invalid date: {processDate:yyyy-MM-dd} - Skipping");
+                    return false;
                 }
+                
+                var quiverInsiderTradingData = HttpRequester($"live/insiders?date_from={processDate.AddDays(-1):yyyyMMdd}&date_to={processDate:yyyyMMdd}").SynchronouslyAwaitTaskResult();
+                if (string.IsNullOrWhiteSpace(quiverInsiderTradingData))
+                {
+                    // We've already logged inside HttpRequester
+                    return false;
+                }
+
+                var insiderTradingByDate = JsonConvert.DeserializeObject<List<RawInsiderTrading>>(quiverInsiderTradingData, _jsonSerializerSettings);
+
+                var insiderTradingByTicker = new Dictionary<string, List<string>>();
+                var universeCsvContents = new List<string>();
+
+                var mapFileProvider = new LocalZipMapFileProvider();
+                mapFileProvider.Initialize(new DefaultDataProvider());
+
+                foreach (var insiderTrade in insiderTradingByDate)
+                {
+                    var ticker = insiderTrade.Ticker.ToUpperInvariant();
+
+                    if (!insiderTradingByTicker.TryGetValue(ticker, out var _))
+                    {
+                        insiderTradingByTicker.Add(ticker, new List<string>());
+                    }
+
+                    var curRow = $"{insiderTrade.Name.Replace(",", string.Empty).Trim().ToLower()},{insiderTrade.Shares},{insiderTrade.PricePerShare},{insiderTrade.SharesOwnedFollowing}";
+                    insiderTradingByTicker[ticker].Add($"{processDate:yyyyMMdd},{curRow}");
+
+                    var sid = SecurityIdentifier.GenerateEquity(ticker, Market.USA, true, mapFileProvider, processDate);
+                    universeCsvContents.Add($"{sid},{ticker},{curRow}");
+                }
+
+                if (!_canCreateUniverseFiles)
+                {
+                    return false;
+                }
+                else if (universeCsvContents.Any())
+                {
+                    SaveContentToFile(_universeFolder, $"{processDate:yyyyMMdd}", universeCsvContents);
+                }
+
+                insiderTradingByTicker.DoForEach(kvp => SaveContentToFile(_destinationFolder, kvp.Key, kvp.Value));
             }
             catch (Exception e)
             {
@@ -208,24 +150,6 @@ namespace QuantConnect.DataProcessing
 
             Log.Trace($"QuiverInsiderTradingDataDownloader.Run(): Finished in {stopwatch.Elapsed.ToStringInvariant(null)}");
             return true;
-        }
-
-        /// <summary>
-        /// Gets the list of companies
-        /// </summary>
-        /// <returns>List of companies</returns>
-        /// <exception cref="Exception"></exception>
-        private async Task<List<Company>> GetCompanies()
-        {
-            try
-            {
-                var content = await HttpRequester("companies");
-                return JsonConvert.DeserializeObject<List<Company>>(content);
-            }
-            catch (Exception e)
-            {
-                throw new Exception("QuiverDownloader.GetSymbols(): Error parsing companies list", e);
-            }
         }
 
         /// <summary>
@@ -296,11 +220,23 @@ namespace QuantConnect.DataProcessing
         private void SaveContentToFile(string destinationFolder, string name, IEnumerable<string> contents)
         {
             var finalPath = Path.Combine(destinationFolder, $"{name.ToLowerInvariant()}.csv");
+            string filePath;
+
+            if (destinationFolder.Contains("universe"))
+            {
+                filePath = Path.Combine(_processedDataDirectory, "universe", $"{name}.csv");
+            }
+            else
+            {
+                filePath = Path.Combine(_processedDataDirectory, $"{name}.csv");
+            }
+
+            var finalFileExists = File.Exists(filePath);
 
             var lines = new HashSet<string>(contents);
-            if (File.Exists(finalPath))
+            if (finalFileExists)
             {
-                foreach (var line in File.ReadAllLines(finalPath))
+                foreach (var line in File.ReadAllLines(filePath))
                 {
                     lines.Add(line);
                 }
@@ -314,70 +250,6 @@ namespace QuantConnect.DataProcessing
             File.WriteAllLines(finalPath, finalLines);
         }
 
-        /// <summary>
-        /// Tries to normalize a potentially defunct ticker into a normal ticker.
-        /// </summary>
-        /// <param name="ticker">Ticker as received from Estimize</param>
-        /// <param name="nonDefunctTicker">Set as the non-defunct ticker</param>
-        /// <returns>true for success, false for failure</returns>
-        private static bool TryNormalizeDefunctTicker(string ticker, out string nonDefunctTicker)
-        {
-            // The "defunct" indicator can be in any capitalization/case
-            if (ticker.IndexOf("defunct", StringComparison.OrdinalIgnoreCase) > 0)
-            {
-                foreach (var delimChar in _defunctDelimiters)
-                {
-                    var length = ticker.IndexOf(delimChar);
-
-                    // Continue until we exhaust all delimiters
-                    if (length == -1)
-                    {
-                        continue;
-                    }
-
-                    nonDefunctTicker = ticker.Substring(0, length).Trim();
-                    return true;
-                }
-
-                nonDefunctTicker = string.Empty;
-                return false;
-            }
-
-            nonDefunctTicker = ticker;
-            return true;
-        }
-
-
-        /// <summary>
-        /// Normalizes Estimize tickers to a format usable by the <see cref="Data.Auxiliary.MapFileResolver"/>
-        /// </summary>
-        /// <param name="ticker">Ticker to normalize</param>
-        /// <returns>Normalized ticker</returns>
-        private static string NormalizeTicker(string ticker)
-        {
-            return ticker.ToLowerInvariant()
-                .Replace("- defunct", string.Empty)
-                .Replace("-defunct", string.Empty)
-                .Replace(" ", string.Empty)
-                .Replace("|", string.Empty)
-                .Replace("-", ".");
-        }
-
-        private class Company
-        {
-            /// <summary>
-            /// The name of the company
-            /// </summary>
-            [JsonProperty(PropertyName = "Name")]
-            public string Name { get; set; }
-
-            /// <summary>
-            /// The ticker/symbol for the company
-            /// </summary>
-            [JsonProperty(PropertyName = "Ticker")]
-            public string Ticker { get; set; }
-        }
-
         private class RawInsiderTrading : QuiverInsiderTrading
         {
             /// <summary>
@@ -386,6 +258,12 @@ namespace QuantConnect.DataProcessing
             [JsonProperty(PropertyName = "Date")]
             [JsonConverter(typeof(DateTimeJsonConverter), "yyyy-MM-dd")]
             public DateTime Date { get; set; }
+            
+            /// <summary>
+            /// The ticker/symbol for the company
+            /// </summary>
+            [JsonProperty(PropertyName = "Ticker")]
+            public string Ticker { get; set; }
         }
 
         /// <summary>
