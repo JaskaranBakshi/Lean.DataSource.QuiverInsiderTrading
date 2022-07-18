@@ -36,14 +36,18 @@ namespace QuantConnect.DataProcessing
             // automatically to the value set on the website when defining this data type
             var destinationDirectory = Path.Combine(
                 Config.Get("temp-output-directory", "/temp-output-directory"),
-                "alternative",
-                "quiver");
+                "alternative");
+            var processedDataDirectory = Path.Combine(
+                Config.Get("processed-data-directory", Globals.DataFolder),
+                "alternative");
+            var processingDateValue = Config.Get("processing-date", Environment.GetEnvironmentVariable("QC_DATAFLEET_DEPLOYMENT_DATE"));
+            var processingDate = Parse.DateTimeExact(processingDateValue, "yyyyMMdd");
 
             QuiverInsiderTradingDataDownloader instance = null;
             try
             {
                 // Pass in the values we got from the configuration into the downloader/converter.
-                instance = new QuiverInsiderTradingDataDownloader(destinationDirectory);
+                instance = new QuiverInsiderTradingDataDownloader(destinationDirectory, processedDataDirectory);
             }
             catch (Exception err)
             {
@@ -56,7 +60,7 @@ namespace QuantConnect.DataProcessing
             try
             {
                 // Run the data downloader/converter.
-                var success = instance.Run();
+                var success = instance.Run(processingDate);
                 if (!success)
                 {
                     Log.Error($"QuantConnect.DataProcessing.Program.Main(): Failed to download/process {QuiverInsiderTradingDataDownloader.VendorName} {QuiverInsiderTradingDataDownloader.VendorDataName} data");

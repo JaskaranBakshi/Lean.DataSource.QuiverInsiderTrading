@@ -36,9 +36,20 @@ class QuiverInsiderTradingUniverseSelectionAlgorithm(QCAlgorithm):
         :param List of QuiverInsiderTradingUniverse data: List of QuiverInsiderTradingUniverse
         :return: List of Symbol objects '''
 
-        # define our selection criteria
-        return [d.Symbol for d in data if d.Value > 0 and d.Shares > 3]
+        symbol_data = {}
 
+        for datum in data:
+            symbol = datum.Symbol
+            self.Log(f"{symbol},{datum.Shares},{datum.PricePerShare},{datum.SharesOwnedFollowing}")
+            
+            if symbol not in symbol_data:
+                symbol_data[symbol] = []
+            symbol_data[symbol].append(datum)
+        
+        # define our selection criteria
+        return [symbol for symbol, d in symbol_data.items()
+                if len(d) >= 2 and sum([x.Shares * x.PricePerShare for x in d]) > 100000]
+        
     def OnSecuritiesChanged(self, changes):
         ''' Event fired each time that we add/remove securities from the data feed
 		

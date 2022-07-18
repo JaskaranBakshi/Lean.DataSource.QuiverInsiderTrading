@@ -14,50 +14,45 @@
  *
 */
 
-using Newtonsoft.Json;
-using NodaTime;
-using QuantConnect.Data;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
+using System.IO;
+using System.Linq;
+using NodaTime;
+using QuantConnect.Data;
+using QuantConnect.Data.UniverseSelection;
+using QuantConnect.Util;
 
 namespace QuantConnect.DataSource
 {
     /// <summary>
     /// Insider Trading by private businesses
     /// </summary>
-    public class QuiverInsiderTrading : BaseData
+    public class QuiverInsiderTradings : BaseDataCollection
     {
-        private static readonly TimeSpan _period = TimeSpan.FromDays(1);
-
+        private static readonly QuiverInsiderTrading _factory = new();
+        
         /// <summary>
-        /// Name
+        /// Return the URL string source of the file. This will be converted to a stream
         /// </summary>
-        [JsonProperty(PropertyName = "Name")]
-        public string Name { get; set; }
-
-        /// <summary>
-        /// Shares amount in transaction
-        /// </summary>
-        [JsonProperty(PropertyName = "Shares")]
-        public decimal? Shares { get; set; }
-
-        /// <summary>
-        /// PricePerShare of transaction
-        /// </summary>
-        [JsonProperty(PropertyName = "PricePerShare")]
-        public decimal? PricePerShare { get; set; }
-
-        /// <summary>
-        /// Shares Owned after transcation
-        /// </summary>
-        [JsonProperty(PropertyName = "SharesOwnedFollowing")]
-        public decimal? SharesOwnedFollowing { get; set; }
-
-        /// <summary>
-        /// The time the data point ends at and becomes available to the algorithm
-        /// </summary>
-        public override DateTime EndTime => Time + _period;
+        /// <param name="config">Configuration object</param>
+        /// <param name="date">Date of this source file</param>
+        /// <param name="isLiveMode">true if we're in live mode, false for backtesting mode</param>
+        /// <returns>String URL of source file.</returns>
+        public override SubscriptionDataSource GetSource(SubscriptionDataConfig config, DateTime date, bool isLiveMode)
+        {
+            return new SubscriptionDataSource(
+                Path.Combine(
+                    Globals.DataFolder,
+                    "alternative",
+                    "quiver",
+                    "insidertrading",
+                    $"{config.Symbol.Value.ToLowerInvariant()}.csv"
+                ),
+                SubscriptionTransportMedium.LocalFile,
+                FileFormat.FoldingCollection
+            );
+        }
 
         /// <summary>
         /// Parses the data from the line provided and loads it into LEAN
@@ -69,18 +64,20 @@ namespace QuantConnect.DataSource
         /// <returns>New instance</returns>
         public override BaseData Reader(SubscriptionDataConfig config, string line, DateTime date, bool isLiveMode)
         {
-            var csv = line.Split(',');
+            return _factory.Reader(config, line, date, isLiveMode);
+        }
 
-            var parsedDate = Parse.DateTimeExact(csv[0], "yyyyMMdd");//, "'yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\''" 
-
-            return new QuiverInsiderTrading
+        /// <summary>
+        /// Clones the data
+        /// </summary>
+        /// <returns>A clone of the object</returns>
+        public override BaseData Clone()
+        {
+            return new QuiverInsiderTradings
             {
-                Name = csv[1],
-                Shares = csv[2].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture)),
-                PricePerShare = csv[3].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture)),
-                SharesOwnedFollowing = csv[4].IfNotNullOrEmpty<decimal?>(s => decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture)),
-                Time = parsedDate,
-                Symbol = config.Symbol
+                Symbol = Symbol,
+                Time = Time,
+                Data = Data?.ToList(point => point.Clone())
             };
         }
 
@@ -89,7 +86,7 @@ namespace QuantConnect.DataSource
         /// </summary>
         public override string ToString()
         {
-            return $"{Symbol} - {Name} - {Shares} - {PricePerShare} - {SharesOwnedFollowing} ";
+            return $"[{string.Join(",", Data.Select(data => data.ToString()))}]";
         }
 
         /// <summary>
@@ -98,7 +95,7 @@ namespace QuantConnect.DataSource
         /// <returns>false</returns>
         public override bool RequiresMapping()
         {
-            return true;
+            return _factory.RequiresMapping();
         }
 
         /// <summary>
@@ -108,7 +105,7 @@ namespace QuantConnect.DataSource
         /// <returns>true</returns>
         public override bool IsSparseData()
         {
-            return true;
+            return _factory.IsSparseData();
         }
 
         /// <summary>
@@ -116,7 +113,7 @@ namespace QuantConnect.DataSource
         /// </summary>
         public override Resolution DefaultResolution()
         {
-            return Resolution.Daily;
+            return _factory.DefaultResolution();
         }
 
         /// <summary>
@@ -124,7 +121,7 @@ namespace QuantConnect.DataSource
         /// </summary>
         public override List<Resolution> SupportedResolutions()
         {
-            return DailyResolution;
+            return _factory.SupportedResolutions();
         }
 
         /// <summary>
@@ -133,7 +130,7 @@ namespace QuantConnect.DataSource
         /// <returns>The <see cref="T:NodaTime.DateTimeZone" /> of this data type</returns>
         public override DateTimeZone DataTimeZone()
         {
-            return DateTimeZone.Utc;
+            return _factory.DataTimeZone();
         }
     }
 }
