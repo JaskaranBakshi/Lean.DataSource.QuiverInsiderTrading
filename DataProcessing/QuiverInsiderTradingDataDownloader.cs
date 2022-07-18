@@ -100,7 +100,7 @@ namespace QuantConnect.DataProcessing
                     return false;
                 }
                 
-                var quiverInsiderTradingData = HttpRequester($"live/insiders?date_from={processDate.AddDays(-1):yyyyMMdd}&date_to={processDate:yyyyMMdd}").SynchronouslyAwaitTaskResult();
+                var quiverInsiderTradingData = HttpRequester($"live/insiders?date={processDate:yyyyMMdd}").SynchronouslyAwaitTaskResult();
                 if (string.IsNullOrWhiteSpace(quiverInsiderTradingData))
                 {
                     // We've already logged inside HttpRequester
@@ -117,7 +117,10 @@ namespace QuantConnect.DataProcessing
 
                 foreach (var insiderTrade in insiderTradingByDate)
                 {
-                    var ticker = insiderTrade.Ticker.ToUpperInvariant();
+                    var ticker = insiderTrade.Ticker;
+                    if (ticker == null) continue;
+
+                    ticker = ticker.Split(':').Last().Replace("\"", string.Empty).ToUpperInvariant().Trim();
 
                     if (!insiderTradingByTicker.TryGetValue(ticker, out var _))
                     {
@@ -263,7 +266,7 @@ namespace QuantConnect.DataProcessing
             /// The ticker/symbol for the company
             /// </summary>
             [JsonProperty(PropertyName = "Ticker")]
-            public string Ticker { get; set; }
+            public string Ticker { get; set; } = null!;
         }
 
         /// <summary>
