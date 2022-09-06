@@ -94,7 +94,7 @@ namespace QuantConnect.DataProcessing
             var today = DateTime.UtcNow.Date;
             try
             {
-                if (processDate >= today || processDate == DateTime.MinValue)
+                if (processDate > today || processDate == DateTime.MinValue)
                 {
                     Log.Trace($"Encountered data from invalid date: {processDate:yyyy-MM-dd} - Skipping");
                     return false;
